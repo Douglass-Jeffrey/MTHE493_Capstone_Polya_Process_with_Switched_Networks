@@ -10,7 +10,8 @@ class Switched_Network:
     def switched_network_step(self, function):
         if function() == True:
             new_node_id = self.graph.add_node()
-            for existing_node_id in self.graph.get_nodes():
+            gen = (existing_node_id for existing_node_id in self.graph.get_nodes() if existing_node_id != new_node_id)
+            for existing_node_id in gen:
                 #print("adding edge between", new_node_id, "and", existing_node_id)
                 self.graph.add_edge(new_node_id, existing_node_id)
         else:

@@ -1,5 +1,6 @@
 from .node import Node
 import matplotlib.pyplot as plt  # for plotting graphs
+import networkx as nx  # for graph visualization
 import numpy as np  # will need numpy since numpy arrays are faster than dicts apparently
 
 class Graph:    
@@ -41,6 +42,44 @@ class Graph:
 
     def get_neighbours(self, node_id):
         return self.get_node(node_id).get_edges()
+
+    def plot_graph(graph, title="Network Graph", layout="spring"):
+        """
+        Plot a Graph object using networkx + matplotlib.
+        Assumes each node object has a get_edges() method.
+        """
+        G = nx.DiGraph()  # directed graph (can show one-way edges)
+
+        # Add nodes and edges from your custom Graph
+        for node_id, node in graph.get_nodes().items():
+            G.add_node(node_id)
+            for neighbour in node.get_edges():
+                G.add_edge(node_id, neighbour)
+
+        # Choose layout
+        if layout == "spring":
+            pos = nx.spring_layout(G, seed=42)
+        elif layout == "circular":
+            pos = nx.circular_layout(G)
+        elif layout == "kamada_kawai":
+            pos = nx.kamada_kawai_layout(G)
+        else:
+            pos = nx.random_layout(G)
+
+        # Draw the graph
+        plt.figure(figsize=(8, 6))
+        nx.draw(
+            G,
+            pos,
+            with_labels=True,
+            node_size=600,
+            node_color="lightblue",
+            font_weight="bold",
+            arrows=True,
+            arrowsize=15
+        )
+        plt.title(title)
+        plt.show()
 
 
     

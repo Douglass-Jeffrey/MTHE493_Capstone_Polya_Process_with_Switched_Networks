@@ -24,10 +24,10 @@ if __name__ == "__main__":
     sw = Switched_Network(graph)
 
     #switch_function = lambda: True
-    switch_function = lambda: random.randint(0, 50) > 49
+    switch_function = lambda: random.randint(0, 20000) > 19999
 
-    for i in range(500):
-        sw.switched_network_step(switch_function)
+    for i in range(100000):
+        sw.step(switch_function)
 
     # Display neighbours
     #for node_id in sw.get_graph().get_nodes():
@@ -36,8 +36,10 @@ if __name__ == "__main__":
 
     #sw.get_graph().plot_graph(title="Switched Network after 1000 steps", layout="spring")
     #sw.get_graph().plot_graph(title="Switched Network after 1000 steps", layout="circular")
-    sw.get_graph().plot_graph(title="Switched Network after 1000 steps", layout="random")
+    #sw.get_graph().plot_graph(title="Switched Network after 1000 steps", layout="random")
     #sw.get_graph().plot_graph(title="Switched Network after 1000 steps", layout="kamada_kawai")
+    sw.get_graph().plot_graph("random layout", layout="random")
+
 
 
     #print("dictionary: ", sw.get_graph().get_nodes())

@@ -8,6 +8,7 @@ class Node:
         self._urn = urn()
         self._edges = set()
         self.value = value
+        self.num_edges = 0
     
     def get_urn(self):
         return self._urn
@@ -17,6 +18,8 @@ class Node:
     
     def add_edge(self, other_node_id):
         self._edges.add(other_node_id)
+        self.num_edges += 1
     
     def remove_edge(self, other_node_id):
         self._edges.remove(other_node_id)
+        self.num_edges -= 1

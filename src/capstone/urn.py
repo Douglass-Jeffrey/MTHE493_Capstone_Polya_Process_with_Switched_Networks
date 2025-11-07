@@ -22,16 +22,10 @@ class urn:
             raise KeyError("Item not found in urn")
     
     def get_contents(self, item_id=None):
+        #returns contents of item id
         return (self.contents[item_id] if (item_id != None) else self.contents)
-
-    def draw_item (self):
-        total_items = sum(self.contents.values())
-        if total_items == 0:
-            raise ValueError("Urn is empty")
-        
-        rand_choice = random.randint(1, total_items)
-        cumulative = 0
-        for item_id, quantity in self.contents.items():
-            cumulative += quantity
-            if rand_choice <= cumulative:
-                return item_id
+    
+    def choose_random_ball(self):
+        items = list(self.contents.keys())
+        weights = list(self.contents.values())
+        return random.choices(items, weights=weights, k=1)[0]

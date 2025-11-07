@@ -1,8 +1,9 @@
 from .graphing import Graph
 from .urn import urn
+import copy
 import random
 
-DELTA = 2
+DELTA = 10
 
 class Polya(Graph):
     def __init__(self):
@@ -20,9 +21,11 @@ class Polya(Graph):
                 mega_urn.add_item(key, contents[key])
 
         ##print(f"{mega_urn.contents}")
+        print("constructed mega urn")
         return mega_urn
 
     def update_urns(self, node_id, item_id):
+        print("got to update")
         node = self.get_node(node_id)
         node.get_urn().add_item(item_id, self.delta)
         neighbours = self.get_neighbours(node_id)
@@ -33,12 +36,16 @@ class Polya(Graph):
 
 
     def run_polya(self):
-        original_graph = self
+        original_graph = copy.deepcopy(self)
         for node in original_graph.get_nodes():
-            mega_urn = original_graph.mega_urn_for_node(node)
-            choice = mega_urn.choose_random_ball()
-            print(f"{node} : {choice}")
-            self.update_urns(node, choice)
+            if self.get_node(node).num_edges == 0:
+                continue
+            else:
+                mega_urn = original_graph.mega_urn_for_node(node)
+                print(mega_urn.contents)
+                choice = mega_urn.choose_random_ball()
+                print(f"bla bla{node} : {choice}")
+                self.update_urns(node, choice)
 
 
 

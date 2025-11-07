@@ -17,20 +17,20 @@ if __name__ == "__main__":
     sw = Switched_Network(switch_rule=switch_function, starting_graph=polya)
     vi = NetworkVisualizer(sw) 
 
-    for i in range(10):
+    for i in range(100):
         sw.step()
 
     #vi.plot_graph("random layout", layout="random")
 
     for label in sw.get_graph().get_nodes():
-        sw.get_graph().get_node(label).get_urn().add_item("Black", 5)
-        sw.get_graph().get_node(label).get_urn().add_item("Red", 5)
+        sw.get_graph().get_node(label).get_urn().add_item("Black", 1)
+        sw.get_graph().get_node(label).get_urn().add_item("Red", 1)
 
     nodes = polya.get_nodes().values()
     for node in nodes:
         print(node.get_urn().contents)
 
-    for i in range(10):
+    for i in range(100):
         polya.run_polya()
     print("done polya")
     nodes = polya.get_nodes().values()

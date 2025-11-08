@@ -1,51 +1,57 @@
 from .graphing import Graph
-from .urn import urn
+from .urn import Urn
 import copy
 import random
 
-DELTA = 10
+DELTA = 1
 
-class Polya(Graph):
-    def __init__(self):
-        super().__init__()
-        self.delta = DELTA
+class Polya():
+    def __init__(self, delta=None, starting_graph=None):
+        if starting_graph is not None:
+            self._graph = starting_graph
+        else:
+            self._graph = Graph()
 
-    def mega_urn_for_node(self, node_id):
-        mega_urn = urn()
-        neighbours = self.get_neighbours(node_id)
+        if delta is not None:
+            self._delta = delta
+        else:
+            self._delta = DELTA
+
+    @property
+    def graph(self):
+        return self._graph
+
+    @property
+    def delta(self):
+        return self._delta
+
+    def mega_urn_for_node(self, node_id, node):
+        mega_urn = Urn()
+        neighbours = self.graph.get_neighbours(node_id)
         for nid in neighbours:
-            neighbour_node = self.get_node(nid)
-            urn_node = neighbour_node.get_urn()
-            contents = urn_node.get_contents()
+            neighbour_node = self.graph.get_node(nid)
+            neighbout_urn = neighbour_node.urn
+            contents = neighbout_urn.contents
             for key in contents.keys():
                 mega_urn.add_item(key, contents[key])
-
-        ##print(f"{mega_urn.contents}")
-        print("constructed mega urn")
         return mega_urn
 
     def update_urns(self, node_id, item_id):
-        print("got to update")
-        node = self.get_node(node_id)
-        node.get_urn().add_item(item_id, self.delta)
-        neighbours = self.get_neighbours(node_id)
+        node = self.graph.get_node(node_id)
+        node.urn.add_item(item_id, self.delta)
+        neighbours = self.graph.get_neighbours(node_id)
         for nid in neighbours:
-            neighbour_node = self.get_node(nid)
-            neighbour_urn = neighbour_node.get_urn()
+            neighbour_node = self.graph.get_node(nid)
+            neighbour_urn = neighbour_node.urn
             neighbour_urn.add_item(item_id, self.delta) 
 
-
-    def run_polya(self):
-        original_graph = copy.deepcopy(self)
-        for node in original_graph.get_nodes():
-            if self.get_node(node).num_edges == 0:
+    def step(self):
+        original_graph = copy.deepcopy(self.graph)
+        for node_id, node in original_graph.nodes.items():
+            if node.num_edges == 0:
                 continue
             else:
-                mega_urn = original_graph.mega_urn_for_node(node)
-                print(mega_urn.contents)
-                choice = mega_urn.choose_random_ball()
-                print(f"bla bla{node} : {choice}")
-                self.update_urns(node, choice)
-
-
+                mega_urn = self.mega_urn_for_node(node_id, node)
+                choice = mega_urn.choose_random_item()
+                self.update_urns(node_id, choice)
 

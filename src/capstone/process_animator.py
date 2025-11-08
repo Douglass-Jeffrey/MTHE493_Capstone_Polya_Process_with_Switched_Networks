@@ -2,20 +2,20 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.animation import FuncAnimation
 
-class NetworkVisualizer:
+class ProcessVisualizer:
 
-    def __init__(self, network):
-        self.network = network              
-        self.graph = network.get_graph()    
+    def __init__(self, process):
+        self.process = process              
+        self.graph = process.graph    
         self.fig, self.ax = plt.subplots(figsize=(10, 8))
         self.pos = None                      
 
     # for static graph plotting
-    def plot_graph(self, title="Network Graph", layout="spring"):
+    def plot_graph(self, title="Process Graph", layout="spring"):
         G = nx.DiGraph()
-        for node_id, node in self.graph.get_nodes().items():
+        for node_id, node in self.graph.nodes.items():
             G.add_node(node_id)
-            for neighbour in node.get_edges():
+            for neighbour in node.edges:
                 G.add_edge(node_id, neighbour)
 
         n = G.number_of_nodes()
@@ -72,9 +72,9 @@ class NetworkVisualizer:
 
             # build networkx graph from current state
             G = nx.DiGraph()
-            for node_id, node in self.graph.get_nodes().items():
+            for node_id, node in self.graph.nodes.items():
                 G.add_node(node_id)
-                for neighbour in node.get_edges():
+                for neighbour in node.edges:
                     G.add_edge(node_id, neighbour)
 
             n = G.number_of_nodes()

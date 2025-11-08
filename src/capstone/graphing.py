@@ -1,52 +1,74 @@
 from .node import Node
-import matplotlib.pyplot as plt  # for plotting graphs
-import networkx as nx  # for graph visualization
-import numpy as np  # may need numpy since numpy arrays are faster than dicts apparently
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 
-class Graph:    
+
+class Graph:
     def __init__(self):
         # dictionary of node ids to node instances
         self._nodes = {}  # id -> Node
         self._num_nodes = 0
         self._num_edges = 0
-    
+
+    # --------------------
+    # Property definitions
+    # --------------------
     @property
     def nodes(self):
-        return self._nodes.keys()
-    
-    """DJEFFREY TODO:
-    possible problem, someone defines a node of id 100 and then adds nodes without specifying id, when it gets to 100 there will be a conflict"""
-    def add_node(self, node_id=None, value=None):
+        return self._nodes
+
+    @nodes.setter
+    def nodes(self, value):
+        if not isinstance(value, dict):
+            raise TypeError("nodes must be a dictionary mapping ids to Node objects")
+        self._nodes = value
+
+    @property
+    def num_nodes(self):
+        return self._num_nodes
+
+    @num_nodes.setter
+    def num_nodes(self, value):
+        if not isinstance(value, int) or value < 0:
+            raise ValueError("num_nodes must be a non-negative integer")
+        self._num_nodes = value
+
+    @property
+    def num_edges(self):
+        return self._num_edges
+
+    @num_edges.setter
+    def num_edges(self, value):
+        if not isinstance(value, int) or value < 0:
+            raise ValueError("num_edges must be a non-negative integer")
+        self._num_edges = value
+
+    # --------------------
+    # Graph operations
+    # --------------------
+    def add_node(self, node_id=None):
         if node_id is None:
-            node_id = self._num_nodes + 1
-        self._nodes[node_id] = Node(node_id, value)
-        self._num_nodes = self._num_nodes + 1
-        #print("added node with nodeid:", node_id)
+            node_id = self.num_nodes + 1
+
+        # Create and add node
+        self.nodes[node_id] = Node(node_id)
+        self.num_nodes = self.num_nodes + 1
         return node_id
 
     def add_edge(self, from_node, to_node, directed=False):
-        if from_node in self._nodes and to_node in self._nodes:
-            self.get_node(from_node).add_edge(to_node)
+        if from_node in self.nodes and to_node in self.nodes:
+            self.nodes[from_node].add_edge(to_node)
             if not directed:
-                self.get_node(to_node).add_edge(from_node)
-            self._num_edges += 1
-    
+                self.nodes[to_node].add_edge(from_node)
+            self.num_edges = self.num_edges + 1
+        else:
+            raise KeyError("Both nodes must exist in the graph before adding an edge.")
+
     def get_node(self, node_id):
-        if node_id not in self._nodes:
+        if node_id not in self.nodes:
             raise KeyError(f"Node '{node_id}' not found in graph")
-        return self._nodes[node_id]
-    
-    def get_num_nodes(self):
-        return self._num_nodes
-    
-    def get_num_edges(self):
-        return self._num_edges
-    
-    def get_nodes(self):
-        return (self._nodes)
+        return self.nodes[node_id]
 
     def get_neighbours(self, node_id):
-        return self.get_node(node_id).get_edges()
-
-
-    
+        return self.get_node(node_id).edges

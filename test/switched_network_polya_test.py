@@ -14,39 +14,49 @@ if __name__ == "__main__":
     graph = Graph()
 
     # Create new polya process with the graph
-    polya = Polya(delta=3, starting_graph=graph)
+    polya = Polya(delta=10, starting_graph=graph)
     
     # Create new switched network process with the graph, and custom switching rule
-    switch_function = lambda: random.randint(0, 1) > 0
+    switch_function = lambda: random.randint(0, 75) > 74
     sw = Switched_Network(switch_rule=switch_function, starting_graph=graph)
 
     # Create new visualizer for sw
-    vi = ProcessVisualizer(sw) 
+    #vi = ProcessVisualizer(sw) 
     # Create new visualizer for polya
+    iv = ProcessVisualizer(sw)
     vi = ProcessVisualizer(polya)
 
-    for i in range(100):
-        sw.step()
+    print("Begin generating switched network...")
+    vi.animate(
+        step_function=lambda: sw.step(),
+        steps=500,
+        interval=100,
+        title="500 Step Switched Network with 1/75 Probability of Link",
+        save=True,
+        output_path="test_2_switched_network_500_prob_1_in_75.mp4",
+    )
+    print("Done generating switched network!")
 
-    #vi.plot_graph("random layout", layout="random")
-
+    print("Begin setting node values...")
     for node_id, node in sw.graph.nodes.items():
-        print(node)
+        node.urn.add_item("Blue", 10)
+        node.urn.add_item("Red", 1)
+        node.urn.last_drawn_item = random.choice(["Blue", "Red"])  # random initial color
+    print("Done setting node values!")
 
-    for node_id, node in sw.graph.nodes.items():
-        node.urn.add_item("Black", 10)
-        node.urn.add_item("Red", 10)
-
-    for node_id, node in sw.graph.nodes.items():
-        print(node)
-
-    for i in range(100):
-        polya.step()
-
-    print("done polya")
+    print("Begin running polya process on switched network...")
+    vi.animate(
+        step_function=lambda: polya.step(),
+        steps=1000,
+        interval=100,
+        title="10 Delta 1000 Step Polya Process on Switched Network with Urns Initialized at 1:10",
+        save=True,
+        output_path="test_2_polya_1000_delta_10_init_1_10.mp4",
+    )
+    print("Done running polya process on switched network!")
 
     for node_id, node in polya.graph.nodes.items():
-        print(node.urn.contents) 
+        print(node_id, node.urn.contents) 
 
 
 

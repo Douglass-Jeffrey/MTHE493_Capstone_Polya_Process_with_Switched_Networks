@@ -11,9 +11,6 @@ class Graph:
         self._num_nodes = 0
         self._num_edges = 0
 
-    # --------------------
-    # Property definitions
-    # --------------------
     @property
     def nodes(self):
         return self._nodes
@@ -44,9 +41,6 @@ class Graph:
             raise ValueError("num_edges must be a non-negative integer")
         self._num_edges = value
 
-    # --------------------
-    # Graph operations
-    # --------------------
     def add_node(self, node_id=None):
         if node_id is None:
             node_id = self.num_nodes + 1

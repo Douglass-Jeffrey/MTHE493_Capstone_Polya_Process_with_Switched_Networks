@@ -3,18 +3,23 @@ import random
 class Urn:
     def __init__(self):
         self._contents = {}
+        self._last_drawn_item = None
 
-    # --------------------
-    # Property definitions
-    # --------------------
     @property
     def contents(self):
-        """Return a copy of the urn's contents to prevent accidental external modification."""
         return dict(self._contents)
+
+    @property
+    def last_drawn_item(self):
+        return self._last_drawn_item
+    
+    @last_drawn_item.setter
+    def last_drawn_item(self, value):
+        self._last_drawn_item = value
+
 
     @contents.setter
     def contents(self, value):
-        """Allow replacing the entire contents dictionary, with type checking."""
         if not isinstance(value, dict):
             raise TypeError("contents must be a dictionary mapping item_id -> quantity")
         for qty in value.values():
@@ -22,9 +27,6 @@ class Urn:
                 raise ValueError("All quantities must be non-negative integers")
         self._contents = value
 
-    # --------------------
-    # Urn operations
-    # --------------------
     def add_item(self, item_id, quantity):
         if not isinstance(quantity, int) or quantity < 0:
             raise ValueError("quantity must be a non-negative integer")

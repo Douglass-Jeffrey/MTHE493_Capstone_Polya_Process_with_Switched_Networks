@@ -1,16 +1,23 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.animation import FuncAnimation
+import numpy as np
+
 
 class ProcessVisualizer:
 
     def __init__(self, process):
-        self.process = process              
-        self.graph = process.graph    
+        """
+        Generic visualizer for any graph-based process.
+        The process must have:
+          - a .graph attribute
+          - nodes accessible via process.graph.nodes (dict of node_id -> Node)
+        """
+        self.process = process
+        self.graph = process.graph
         self.fig, self.ax = plt.subplots(figsize=(10, 8))
-        self.pos = None                      
+        self.pos = {}
 
-    # for static graph plotting
     def plot_graph(self, title="Process Graph", layout="spring"):
         G = nx.DiGraph()
         for node_id, node in self.graph.nodes.items():
@@ -44,10 +51,7 @@ class ProcessVisualizer:
         plt.tight_layout()
         plt.show()
 
-    # for animated graph plotting
-    #DJEFFREY TODO: should change args to allow step function to be passed in with args
-    # would stop us from having to predefine step function for a process first in test before passing to animate
-    # would also allow us to change step function on the fly
+    # Animated Graph Plotting
     def animate(
         self,
         step_function,
@@ -57,20 +61,28 @@ class ProcessVisualizer:
         title="Graph Animation",
         save=False,
         output_path="animation.mp4",
-        ):
+    ):
 
         self.ax.clear()
         self.ax.axis("off")
         self.ax.set_title(title)
-
-        # node positions set as an empty dictionary to be populated over time
         self.pos = {}
 
+        # optional color map if urn colors use names like "Red" or "Black"
+        COLOR_MAP = {
+            "Red": "red",
+            "Blue": "blue",
+            "Black": "black",
+            "Green": "green",
+            "White": "white",
+            "Yellow": "yellow",
+        }
+
         def update(frame):
-            # apply user-defined step function
+            # advance one step of the process
             step_function()
 
-            # build networkx graph from current state
+            # rebuild networkx graph
             G = nx.DiGraph()
             for node_id, node in self.graph.nodes.items():
                 G.add_node(node_id)
@@ -79,13 +91,10 @@ class ProcessVisualizer:
 
             n = G.number_of_nodes()
             m = G.number_of_edges()
-
-            # skip drawing if graph is empty
             if n == 0:
                 return []
 
             # ensure all nodes have an initial position
-            import numpy as np
             for node in G.nodes:
                 if node not in self.pos:
                     self.pos[node] = np.random.rand(2)
@@ -100,18 +109,26 @@ class ProcessVisualizer:
                     if node not in self.pos:
                         self.pos[node] = np.random.rand(2)
 
-            # clear axis before drawing
             self.ax.clear()
             self.ax.axis("off")
 
-            # scale node size and edge width based on total number of steps 
-            node_size = max(5, 10000 / steps)
-            edge_width = max(0.1, 100 / steps)
+            #Handle colouring of nodes if necessary
+            node_colors = []
+            for node_id, node in self.graph.nodes.items():
+                # try to extract urn keys if available
+                color = None
+                if hasattr(node, "urn") and hasattr(node.urn, "last_drawn_item"):
+                    last = node.urn.last_drawn_item
+                    if last is not None:
+                        color = COLOR_MAP.get(last, last)
+                node_colors.append(color if color else "dodgerblue")
+
+            node_size = max(5, 10000 / (n + 1))
+            edge_width = max(0.1, 100 / (n + 1))
             alpha = 0.4 if n < 5000 else 0.1
 
-            # draw nodes
-            nx.draw_networkx_nodes(G, self.pos, node_size=node_size, node_color="dodgerblue", alpha=alpha, ax=self.ax)
-            # draw edges if not too many
+
+            nx.draw_networkx_nodes(G, self.pos, node_size=node_size, node_color=node_colors, alpha=alpha, ax=self.ax)
             if m < 200000:
                 nx.draw_networkx_edges(G, self.pos, width=edge_width, alpha=alpha * 0.6, arrows=False, ax=self.ax)
 
@@ -119,16 +136,15 @@ class ProcessVisualizer:
 
             return []
 
-        # create animation
         anim = FuncAnimation(self.fig, update, frames=steps, interval=interval, repeat=False)
 
-        if save: # note need to have ffmpeg installed for saving, pillow doesnt work as far as ive tried
+        if save:
             try:
                 from matplotlib.animation import FFMpegWriter
                 writer = FFMpegWriter(fps=1000 // interval, bitrate=1800)
                 anim.save(output_path, writer=writer)
             except Exception as e:
-                print("FFmpeg not available, saving as GIF instead:", e)
-            anim.save(output_path.replace(".mp4", ".gif"), writer="pillow", fps=1000 // interval)
+                print("FFmpeg not available, try saving as GIF instead:", e)
+                anim.save(output_path.replace(".mp4", ".gif"), writer="pillow", fps=1000 // interval)
         else:
             plt.show()

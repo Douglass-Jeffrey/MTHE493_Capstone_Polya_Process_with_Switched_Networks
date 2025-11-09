@@ -7,6 +7,9 @@ Dev Log:
     2025-11-07: Finished implementing all core features, both polya and switched network processes can be simulated and visualized.
 
 Future Considerations:
+    Create additional variants of polya process (memory vs memoryless)
+    Create tests on different graphs, new graph growth or creation processes other than switched network
+
     Allow graphs to be saved and loaded as data structures so that we can run different processes on the same graphs
     Seriously consider graph efficiency updates, at high node and edge counts (nodes>1000, edges> 10000) in graphs polya can take hours or days to complete. Consider existing python graphing libraries.
         Maybe running steps in batches? Maybe only running full polya process every x steps? Maybe sorting graph's nodes based on edge counts?

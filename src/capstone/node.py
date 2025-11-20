@@ -1,4 +1,5 @@
 from .urn import Urn
+from collections import Counter
 
 class Node:
     
@@ -7,10 +8,8 @@ class Node:
         self._urn = Urn()
         self._edges = set()
         self._num_edges = 0
+        self._mega_urn = Counter()
 
-    # --------------------
-    # Property definitions
-    # --------------------
     @property
     def node_id(self):
         return self._node_id
@@ -18,6 +17,19 @@ class Node:
     @property
     def urn(self):
         return self._urn
+
+    @property
+    def mega_urn(self):
+        return self._mega_urn
+
+    @mega_urn.setter
+    def mega_urn(self, value):
+        if not isinstance(value, dict):
+            raise TypeError("mega_urn must be a dictionary mapping item_id -> quantity")
+        for qty in value.values():
+            if not isinstance(qty, int) or qty < 0:
+                raise ValueError("All quantities in mega_urn must be non-negative integers")
+        self._mega_urn = Counter(value)
 
     @urn.setter
     def urn(self, value):

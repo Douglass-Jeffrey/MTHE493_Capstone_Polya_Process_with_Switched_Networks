@@ -53,8 +53,10 @@ class Graph:
     def add_edge(self, from_node, to_node, directed=False):
         if from_node in self.nodes and to_node in self.nodes:
             self.nodes[from_node].add_edge(to_node)
+            self.nodes[from_node].mega_urn.update(self.nodes[to_node].urn.contents)
             if not directed:
                 self.nodes[to_node].add_edge(from_node)
+                self.nodes[to_node].mega_urn.update(self.nodes[from_node].urn.contents)
             self.num_edges = self.num_edges + 1
         else:
             raise KeyError("Both nodes must exist in the graph before adding an edge.")

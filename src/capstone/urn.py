@@ -1,8 +1,9 @@
 import random
+from collections import Counter
 
 class Urn:
     def __init__(self):
-        self._contents = {}
+        self._contents = Counter()
         self._last_drawn_item = None
 
     @property

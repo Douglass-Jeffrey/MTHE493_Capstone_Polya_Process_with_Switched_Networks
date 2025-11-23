@@ -18,4 +18,6 @@ Future Considerations:
         Look in to increasing efficiency with matrix multiplications using gpu. 
 
 Dev Log:
-    2025-11-22: Created and pushed code to optimization branch. New branch is heavily focused on optimizing network growth and processes. I was able to generate a 200 million node switched network with each node having probability 1 of full connection. changes are discussed more in capstone_optimization readme. New code is more than 100000x more time-efficient than previous structure (1000 steps on 1000 nodes in 50 minutes -> 1000 steps on 10000000 nodes in < 1 min). 
+    2025-11-22: Created and pushed code to optimization branch. New branch is heavily focused on optimizing network growth and processes. I was able to generate a 200 million node switched network with each node having probability 1 of full connection. changes are discussed more in capstone_optimization readme. New code is more than 100000x more time-efficient than previous structure (1000 steps on 1000 nodes in 50 minutes -> 1000 steps on 10000000 nodes in < 1 min). Also got cupy working and CUDA set up on my GeForce GTX 1660 Ti which massively improved graph growing and polya performance.
+
+Next steps: Dealing with memory and performance bottleneck from the low 6gb vram on the card, more info in optimization readme. 

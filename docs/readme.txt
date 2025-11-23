@@ -63,3 +63,12 @@ Next steps:
       find a way where i can use the GPU for the stuff that it's good at,
       and leave the other stuff to the CPU.
 
+Dev Log: 2025-11-23:
+  Upgraded hardware from 16->32 GB of DDR4 ram, also went from 2400Hz to 3200Hz
+  (turned on xmp).
+  Can now run 1 billion nodes on dim-optimized switched network setup on CPU with
+  about 200 seconds per polya step.
+  Next steps are to hybridize program to CPU and GPU effectively with new ram.
+  Look into holding graph in main memory and using CPU to write blocks of < 6gb
+  to vram and read them off. IE find a way to use GPU for matmuls, with CPU moving
+  data to and from vram to prevent GPU wasting cycles writing to UM 

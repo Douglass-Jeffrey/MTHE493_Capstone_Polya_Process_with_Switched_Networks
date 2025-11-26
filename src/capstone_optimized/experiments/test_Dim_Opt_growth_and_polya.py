@@ -26,13 +26,13 @@ if not CUPY_AVAILABLE:
     # don't exit automatically; continue so the script still runs on CPU if desired
 
 
-N = int(os.environ.get('CAPSTONE_N', '175000000'))
+N = int(os.environ.get('CAPSTONE_N', '100'))
 graph = Switched_Network_Optimized_Graph(num_nodes=N, num_colors=2, use_gpu=True)
 
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
-growth = Dim_Optimized_Switch_Network_Growth(graph, connection_prob = 0.1)
-NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '1750'))
-INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '1000000'))
+growth = Dim_Optimized_Switch_Network_Growth(graph, connection_prob = 0.05)
+NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '1'))
+INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '100'))
 
 def _is_oom_exception(exc):
     msg = str(exc).lower()
@@ -96,17 +96,18 @@ print("Running Polya process...")
 polya_start_time = time.time()
 
 polya = Polya_Process(graph, delta=1)
-POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', '100'))
+POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', '100000000'))
 for step_i in range(POLYA_STEPS):
     t0 = time.time()
     polya.step()
     t1 = time.time()
-    print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
+    if (step_i % 1000000 == 0):
+        print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
 
 print(f'Polya process complete. Total time: {time.time() - polya_start_time:.3f}s')
 print('TEST_Y_DONE', 'nodes=', graph.num_nodes, 'edges=', graph.num_edges)
 
-"""
+
 # Optional: export urn matrix as CSV
 import numpy as np
 urns_np = graph.node_urns
@@ -114,7 +115,7 @@ if hasattr(urns_np, 'get'):  # if CuPy array
     urns_np = urns_np.get()
 np.savetxt("node_urns.csv", urns_np, delimiter=",", fmt="%d")
 
-
+"""
 # Optional: export adjacency matrix as CSV in COO format
 from scipy.sparse import csr_matrix
 

@@ -15,10 +15,12 @@ class Polya_Process:
         row_sums = cp.sum(mega, axis=1, keepdims=True)
         row_sums[row_sums == 0] = 1  # if mega urn is zero, avoid div by zero
         # Create probability matrix holding color probabilities for each node's mega urn
+        #cp.float64 precision 
         probs = mega / row_sums  #(num_nodes x num_colors)
 
         # Vectorized sampling
         # Generate random vals for each node
+        #cp.float64 precision 
         rand_vals = cp.random.rand(self.graph.num_nodes) # num_nodes x 1
         if self.graph.num_colors == 2:
             draws = (rand_vals > probs[:, 0]).astype(cp.int32)

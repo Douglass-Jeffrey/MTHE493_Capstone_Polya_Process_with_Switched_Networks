@@ -72,3 +72,11 @@ Dev Log: 2025-11-23:
   Look into holding graph in main memory and using CPU to write blocks of < 6gb
   to vram and read them off. IE find a way to use GPU for matmuls, with CPU moving
   data to and from vram to prevent GPU wasting cycles writing to UM 
+
+Next steps 2025-11-26:
+  For the purpose of modelling social networks, we want to implement a way
+  to grow a barabasi-albert network (also consider erdos reyni)
+  This presents a new optimization problem of representing this network as efficiently as possible.
+  Need to figure out if we can get better than CSR like we did with switched network
+  From here we want to 
+  

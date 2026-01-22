@@ -14,7 +14,7 @@ except Exception as _e:
     print('Could not import capstone_optimized.cupy_fallback:', _e)
     CUPY_AVAILABLE = False
 
-from capstone_optimized.core import Graph, Polya_Process, Switch_Network_Growth, Switched_Network_Optimized_Graph, Dim_Optimized_Switch_Network_Growth
+from capstone_optimized.core import Graph, Polya_Process, Switch_Network_Growth, Switched_Network_Optimized_Graph, Dim_Optimized_Switch_Network_Growth, Barabasi_Albert_Growth
 
 # If user requests GPU but it's not available in this interpreter, fail fast with guidance
 if not CUPY_AVAILABLE:
@@ -26,13 +26,13 @@ if not CUPY_AVAILABLE:
     # don't exit automatically; continue so the script still runs on CPU if desired
 
 
-N = int(os.environ.get('CAPSTONE_N', '100000'))
+N = int(os.environ.get('CAPSTONE_N', '10000'))
 graph = Graph(num_nodes=N, num_colors=2, use_gpu=True)
 
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
-growth = Switch_Network_Growth(graph, connection_prob = 0.01)
+growth = Barabasi_Albert_Growth(graph, m=3)
 NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '100'))
-INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '1000'))
+INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '100'))
 
 def _is_oom_exception(exc):
     msg = str(exc).lower()
@@ -54,7 +54,7 @@ for b in range(NUM_BATCHES):
         attempt += 1
         t0 = time.time()
         try:
-            growth.grow_batch(batch_size=batch_size)
+            growth.grow()
             t1 = time.time()
             # report GPU memory if available
             free_mb = total_mb = None

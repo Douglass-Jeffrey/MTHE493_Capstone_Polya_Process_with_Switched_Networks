@@ -1,7 +1,7 @@
 try:
     import cupy as cp
     from cupyx.scipy.sparse import csr_matrix as gpu_csr_matrix
-    # Check whether CuPy actually has access to CUDA devices
+    # Check whether CuPy has access to CUDA devices
     try:
         has_cuda = cp.cuda.is_available()
         dev_count = cp.cuda.runtime.getDeviceCount() if has_cuda else 0

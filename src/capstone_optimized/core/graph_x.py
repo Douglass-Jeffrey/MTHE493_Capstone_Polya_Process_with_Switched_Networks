@@ -7,6 +7,7 @@ else:
 
 class Graph:
     """
+    TODO: need to refactor this class to ensure storage happens in RAM, virtual MEM
     Extreme high performance upgrade for graph class with GPU compatibility for matmuls
     After graph is grown store as a CSR adjacency matrix
     Graph allows for directed edges, forces all edge weights to 1 to save on mem. (can change in future)

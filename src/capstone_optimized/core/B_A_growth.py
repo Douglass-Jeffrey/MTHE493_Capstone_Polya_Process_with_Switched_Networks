@@ -26,10 +26,8 @@ class Barabasi_Albert_Growth:
         else:
             self.degrees = cp.zeros(0, dtype=cp.int32)
 
+    #single node addition with preferential attachment
     def add_node(self):
-        """
-        Add a single new node using preferential attachment
-        """
         new_node = self.current_nodes
         N = int(self.degrees.size)
 
@@ -49,7 +47,9 @@ class Barabasi_Albert_Growth:
         # choose m distinct existing nodes
         m_actual = min(self.m, N)
         
-        targets = cp.random.choice(N, size=m_actual, replace=False, p=probs)
+        # replace = false means values will be chosen without replacement, ie multiple edges to same target not allowed,
+        # this is what we want but cupy doesnt support it yet, so forced to do true, TODO: NEEDS FIXING LATER
+        targets = cp.random.choice(N, size=m_actual, replace=True, p=probs)
 
         # add undirected edges
         new_nodes_arr = cp.full(targets.shape, new_node, dtype=cp.int32)
@@ -63,17 +63,13 @@ class Barabasi_Albert_Growth:
         # increment current node counter
         self.current_nodes += 1
 
+    # Sequential growth
     def grow(self):
-        """
-        Grow the graph sequentially until graph.num_nodes is reached
-        """
         while self.current_nodes < self.graph.num_nodes:
             self.add_node()
+        print("Finished growing to", self.graph.num_nodes, "nodes.")
 
     def finalize_growth(self):
-        """
-        Build CSR adjacency matrix once after growth is complete
-        """
         self.graph.build_csr()
 
     """

@@ -30,9 +30,9 @@ N = int(os.environ.get('CAPSTONE_N', '10000'))
 graph = Graph(num_nodes=N, num_colors=2, use_gpu=True)
 
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
-growth = Barabasi_Albert_Growth(graph, m=3)
-NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '100'))
-INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '100'))
+growth = Barabasi_Albert_Growth(graph, m=1)
+NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '1000'))
+INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '1000'))
 
 def _is_oom_exception(exc):
     msg = str(exc).lower()
@@ -47,6 +47,8 @@ def _is_oom_exception(exc):
     return False
 
 t_growth_start = time.time()
+growth.grow()
+"""
 for b in range(NUM_BATCHES):
     batch_size = INITIAL_BATCH_SIZE
     attempt = 0
@@ -84,6 +86,7 @@ for b in range(NUM_BATCHES):
             else:
                 # re-raise unexpected exceptions
                 raise
+"""
 print(f'Growth phase complete. Total growth time: {time.time() - t_growth_start:.3f}s')
 
 print("Building CSR adjacency matrix...")

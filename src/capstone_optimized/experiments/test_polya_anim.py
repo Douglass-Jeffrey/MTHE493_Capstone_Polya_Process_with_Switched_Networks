@@ -29,9 +29,6 @@ if not CUPY_AVAILABLE:
 N = int(os.environ.get('CAPSTONE_N', '100'))
 graph = Graph(num_nodes=N, num_colors=2, use_gpu=False)
 
-
-
-
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
 growth = Barabasi_Albert_Growth(graph, m=1)
 NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '5'))

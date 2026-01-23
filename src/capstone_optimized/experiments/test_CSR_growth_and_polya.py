@@ -26,12 +26,12 @@ if not CUPY_AVAILABLE:
     # don't exit automatically; continue so the script still runs on CPU if desired
 
 
-N = int(os.environ.get('CAPSTONE_N', '100000'))
+N = int(os.environ.get('CAPSTONE_N', '30000000'))
 graph = Graph(num_nodes=N, num_colors=2, use_gpu=True)
 
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
-growth = Switch_Network_Growth(graph, connection_prob = 0.01)
-NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '100'))
+growth = Switch_Network_Growth(graph, connection_prob = 0.001)
+NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '30000'))
 INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '1000'))
 
 def _is_oom_exception(exc):

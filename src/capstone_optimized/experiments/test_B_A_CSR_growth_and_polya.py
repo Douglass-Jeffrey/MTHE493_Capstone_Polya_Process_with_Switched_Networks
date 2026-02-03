@@ -14,7 +14,7 @@ except Exception as _e:
     print('Could not import capstone_optimized.cupy_fallback:', _e)
     CUPY_AVAILABLE = False
 
-from capstone_optimized.core import Graph, Polya_Process, Switch_Network_Growth, Switched_Network_Optimized_Graph, Dim_Optimized_Switch_Network_Growth, Barabasi_Albert_Growth
+from capstone_optimized.core import Graph, Polya_Process, Switch_Network_Growth, Switched_Network_Optimized_Graph, Dim_Optimized_Switch_Network_Growth, Barabasi_Albert_Growth, Polya_Process_Animator
 
 # If user requests GPU but it's not available in this interpreter, fail fast with guidance
 if not CUPY_AVAILABLE:
@@ -25,14 +25,18 @@ if not CUPY_AVAILABLE:
     print("  python src\\capstone_optimized\\experiments\\test_y.py")
     # don't exit automatically; continue so the script still runs on CPU if desired
 
+initial_nodes = 64
+num_batches = 16
+batch_size = 4
+polya_steps = 100
 
-N = int(os.environ.get('CAPSTONE_N', '10000'))
-graph = Graph(num_nodes=N, num_colors=2, use_gpu=True)
-
+N = int(os.environ.get('CAPSTONE_N', f'{initial_nodes + num_batches * batch_size}'))
+graph = Graph(num_nodes=initial_nodes, num_colors=2, use_gpu=True)
+    
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
-growth = Barabasi_Albert_Growth(graph, m=1)
-NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '1000'))
-INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '1000'))
+growth = Barabasi_Albert_Growth(graph, m=3, initial_nodes=initial_nodes)
+NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', f'{num_batches}'))
+INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', f'{batch_size}'))
 
 def _is_oom_exception(exc):
     msg = str(exc).lower()
@@ -47,8 +51,7 @@ def _is_oom_exception(exc):
     return False
 
 t_growth_start = time.time()
-growth.grow()
-"""
+
 for b in range(NUM_BATCHES):
     batch_size = INITIAL_BATCH_SIZE
     attempt = 0
@@ -56,7 +59,7 @@ for b in range(NUM_BATCHES):
         attempt += 1
         t0 = time.time()
         try:
-            growth.grow()
+            growth.grow_batch(batch_size)
             t1 = time.time()
             # report GPU memory if available
             free_mb = total_mb = None
@@ -67,11 +70,12 @@ for b in range(NUM_BATCHES):
                     total_mb = total / 1024 ** 2
                 except Exception:
                     free_mb = total_mb = None
-
+            
             if free_mb is not None:
                 print(f'Batch {b+1}/{NUM_BATCHES} size={batch_size} time={t1-t0:.3f}s edges={graph.num_edges} free_mem={free_mb:.1f}MB total={total_mb:.1f}MB')
             else:
                 print(f'Batch {b+1}/{NUM_BATCHES} size={batch_size} time={t1-t0:.3f}s edges={graph.num_edges}')
+            
             break
         except Exception as e:
             if _is_oom_exception(e):
@@ -86,7 +90,6 @@ for b in range(NUM_BATCHES):
             else:
                 # re-raise unexpected exceptions
                 raise
-"""
 print(f'Growth phase complete. Total growth time: {time.time() - t_growth_start:.3f}s')
 
 print("Building CSR adjacency matrix...")
@@ -99,17 +102,27 @@ print("Running Polya process...")
 polya_start_time = time.time()
 
 polya = Polya_Process(graph, delta=1)
-POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', '10'))
+"""
+POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', f'{polya_steps}'))
 for step_i in range(POLYA_STEPS):
     t0 = time.time()
     polya.step()
     t1 = time.time()
     print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
+"""
+
+# create animator 
+anim = Polya_Process_Animator(graph, polya, node_size=80, interval=50, )
+print('Animator created, nodes=', graph.num_nodes, 'edges=', graph.num_edges)
+
+# animate the process
+anim.animate(steps=200, save_path="polya_demo.mp4")
+print('Update OK')
 
 print(f'Polya process complete. Total time: {time.time() - polya_start_time:.3f}s')
 print('TEST_Y_DONE', 'nodes=', graph.num_nodes, 'edges=', graph.num_edges)
 
-"""
+
 # Optional: export urn matrix as CSV
 import numpy as np
 urns_np = graph.node_urns
@@ -117,7 +130,7 @@ if hasattr(urns_np, 'get'):  # if CuPy array
     urns_np = urns_np.get()
 np.savetxt("node_urns.csv", urns_np, delimiter=",", fmt="%d")
 
-
+"""
 # Optional: export adjacency matrix as CSV in COO format
 from scipy.sparse import csr_matrix
 

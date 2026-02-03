@@ -11,7 +11,7 @@ class Polya_Process:
 
     def step(self):
         mega = self.graph.get_mega_urns()  # num_nodes x num_colors)
-        # Compute sums of mega balls in each mega urn
+        # Compute sums of balls in each mega urn
         row_sums = cp.sum(mega, axis=1, keepdims=True)
         row_sums[row_sums == 0] = 1  # if mega urn is zero, avoid div by zero
         # Create probability matrix holding color probabilities for each node's mega urn

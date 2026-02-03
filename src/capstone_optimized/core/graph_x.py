@@ -13,13 +13,13 @@ class Graph:
     Graph allows for directed edges, forces all edge weights to 1 to save on mem. (can change in future)
     Edges are stored as a buffer that grows based on mem availability, and number of edges in the graph
     """
-    def __init__(self, num_nodes, num_colors=2, initial_edge_capacity=1_000_000, use_gpu=True):
+    def __init__(self, num_nodes, node_urns = None, num_colors=2, initial_edge_capacity=1_000_000, use_gpu=True):
         self.num_nodes = num_nodes
         self.num_colors = num_colors
+        self.use_gpu = use_gpu and CUPY_AVAILABLE
         if use_gpu and not CUPY_AVAILABLE:
             print('GPU requested but not available, running on CPU with NumPy')
-        self.use_gpu = use_gpu and CUPY_AVAILABLE
-
+        
         """
         Dynamic edge buffer. Start with some initial capacity for the edges stored in cupy arr.
         Allows for nodes to be added in batches, with edges determined probabilistically.
@@ -28,8 +28,11 @@ class Graph:
         self.edge_capacity = initial_edge_capacity
         self.edges = cp.zeros((self.edge_capacity, 2), dtype=cp.int32)
         self.num_edges = 0
+
         # vector holding the urn for each node in the graph
-        self.node_urns = cp.ones((num_nodes, num_colors), dtype=cp.int32)
+        if node_urns is None: self.node_urns = cp.ones((num_nodes, num_colors), dtype=cp.int32)
+        else: self.node_urns = node_urns
+
         # most efficient storage possible for edges using CSR adjacency matrix, 
         self.adj_matrix = None
 
@@ -46,30 +49,21 @@ class Graph:
     
         # convert to cp arrays if necessary
         # check if array is numpy/cupy array, if not convert it to one
-        if not hasattr(i_arr, 'dtype'):
-            i_arr = cp.array(i_arr, dtype=cp.int32)
-        else:
-            # force type to cupy.int32
-            i_arr = i_arr.astype(cp.int32)
-        # check if array is numpy/cupy array, if not convert it to one
-        if not hasattr(j_arr, 'dtype'):
-            j_arr = cp.array(j_arr, dtype=cp.int32)
-        else:
-            # force type to cupy.int32
-            j_arr = j_arr.astype(cp.int32)
+        if not hasattr(i_arr, 'dtype'): i_arr = cp.array(i_arr, dtype=cp.int32)
+        else: i_arr = i_arr.astype(cp.int32)
 
+        if not hasattr(j_arr, 'dtype'): j_arr = cp.array(j_arr, dtype=cp.int32)
+        else: j_arr = j_arr.astype(cp.int32)
 
         k = int(i_arr.size)
-        # Resize buffers if needed. Try to grow conservatively and respect
-        # available GPU memory. Attempt an allocation, and if OOM back off
-        # instead of unbounded doubling which can overshoot device memory.
+
+        # Resize buffers if needed. 
         needed = self.num_edges + k
         # if we need more mem to store edges, do the allocation process
         if needed > self.edge_capacity:
             # bytes per row estimate edges has 2 ints
             bytes_per_row = int(self.edges.dtype.itemsize) * 2
-
-            # start with a modest increment strategy: add either k or 25% of
+            # start with a modest increment strategy: add either # new edges or 25% of
             # current capacity, whichever is larger
             increment = max(k, max(1024, int(self.edge_capacity * 0.25)))
             new_capacity = self.edge_capacity
@@ -130,19 +124,6 @@ class Graph:
         self.edges[start:end, 0] = i_arr
         self.edges[start:end, 1] = j_arr
         self.num_edges = end
-
-    # TODO: make a CPU version for this since we crash on CUDA malloc if out of vram
-    def build_csr(self):
-        if self.num_edges == 0:
-            self.adj_matrix = None
-        else:
-            rows = self.edges[: self.num_edges, 0]
-            cols = self.edges[: self.num_edges, 1]
-            nnz = int(self.num_edges)
-            self.adj_matrix = csr_matrix(
-                    (cp.ones(nnz, dtype=cp.float32), (rows, cols)),
-                    shape=(self.num_nodes, self.num_nodes),
-                )
     
     # Urns are initialized as 1, 1 by default, can set them to custom values
     def set_node_urns(self, urns):
@@ -155,12 +136,26 @@ class Graph:
             raise ValueError(f'urns shape must be ({self.num_nodes}, {self.num_colors}), got {urns.shape}')
         self.node_urns = urns
 
+    #djeffrey TODO set up cuda streams for this since its slow as balls
     def get_mega_urns(self, include_self=True):
+        # If no edges, each mega urn is just the node's own urn
         if self.adj_matrix is None:
-            # If no edges, each mega urn is just the node's own urn
             return self.node_urns.copy()
+        
         mega_urns = self.adj_matrix @ self.node_urns # nxn * nxc = nxc
         if include_self:
             # Add own urn (vectorized, element-wise)
             mega_urns += self.node_urns
         return mega_urns
+    
+    def build_csr(self):
+        if self.num_edges == 0:
+            self.adj_matrix = None
+        else:
+            rows = self.edges[: self.num_edges, 0]
+            cols = self.edges[: self.num_edges, 1]
+            nnz = int(self.num_edges)
+            self.adj_matrix = csr_matrix(
+                    (cp.ones(nnz, dtype=cp.float32), (rows, cols)),
+                    shape=(self.num_nodes, self.num_nodes),
+                )

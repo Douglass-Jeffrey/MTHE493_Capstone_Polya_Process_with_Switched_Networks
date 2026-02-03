@@ -61,5 +61,11 @@ try:
     print('a device:', a.device.id)
 except Exception:
     pass
+import numpy as np
+x_cpu = np.array([1, 2, 3])
+x_gpu = cp.asarray(x_cpu) # Move data to the current GPU device
+
+print(f"CPU array device: {x_cpu.device}")
+print(f"GPU array device: {x_gpu.device}")
 
 print('GPU verification complete')

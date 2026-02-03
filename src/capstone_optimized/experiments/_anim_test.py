@@ -12,8 +12,6 @@ from capstone_optimized.core import Graph, Barabasi_Albert_Growth, Polya_Process
 # create graph
 G = Graph(num_nodes=100, num_colors=2, use_gpu=False)
 
-x = Graph()
-
 #grow the graph
 B_A_growth = Barabasi_Albert_Growth(G, m=1)
 B_A_growth.grow()

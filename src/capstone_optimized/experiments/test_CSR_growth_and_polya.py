@@ -31,8 +31,8 @@ graph = Graph(num_nodes=N, num_colors=2, use_gpu=True)
 
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
 growth = Switch_Network_Growth(graph, connection_prob = 0.001)
-NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '30000'))
-INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '1000'))
+NUM_BATCHES = int(os.environ.get('CAPSTONE_BATCHES', '300'))
+INITIAL_BATCH_SIZE = int(os.environ.get('CAPSTONE_BATCH_SIZE', '100000'))
 
 def _is_oom_exception(exc):
     msg = str(exc).lower()

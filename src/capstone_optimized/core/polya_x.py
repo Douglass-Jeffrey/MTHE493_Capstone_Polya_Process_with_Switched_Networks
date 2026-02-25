@@ -5,10 +5,10 @@ class Polya_Process:
     """
     Fully vectorized Polya process for all nodes.
     """
-    def __init__(self, graph: Graph, delta=None, memory_enabled = False, memory_decay_time=0):
+    def __init__(self, graph: Graph, delta=None, memory_enabled = False, memory_decay_time=0, mem_decay = None):
         self.graph = graph
         self.step_count = 1
-        if delta == None:
+        if delta is None:
             self.delta = cp.ones((self.graph.num_nodes, self.graph.num_colors), dtype=cp.int32)
         else:
             self.delta = delta
@@ -17,6 +17,10 @@ class Polya_Process:
             self.memory_decay_time = memory_decay_time
             self.memory_arr = cp.zeros((self.memory_decay_time, self.graph.num_nodes), dtype=cp.int32)
             self.initial_urns = self.graph.node_urns.copy()
+            if mem_decay is None:
+                self.mem_decay = cp.ones((self.graph.num_nodes, self.graph.num_colors), dtype=cp.int32)
+            else:
+                self.mem_decay = mem_decay
 
 
     def step(self):
@@ -47,23 +51,25 @@ class Polya_Process:
 
         # Vectorized urn update 
         rows = cp.arange(self.graph.num_nodes)
+        #print(f"BEFORE: {self.graph.node_urns[1]}") #debug
+        #print(f"DRAWS: {draws[1]}") #debug
+        #print(f"ADDING: {self.delta[1, draws]} to node 1") #debug
         self.graph.node_urns[rows, draws] += self.delta[rows, draws]
+        #print(f"AFTER: {self.graph.node_urns[1]}") #debug
 
         if self.memory_enabled:
             self.memory_step(draws)
         self.step_count += 1
         
     def memory_step(self, draws):
-        if self.step_count < self.memory_decay_time:
-            self.memory_arr[self.step_count] = draws
-        else:
-            if self.step_count == self.memory_decay_time:
-                # when we hit memory decay time, delete all initial urns from memory 
-                self.graph.node_urns -= self.initial_urns
-            else: 
-                rows = cp.arange(self.graph.num_nodes)
-                #if we are at the point where we are removing balls due to memory, find the draws of current step - memory, and subtract their deltas from the urns 
-                self.graph.node_urns[rows, self.memory_arr[self.step_count % self.memory_decay_time]] -= self.delta[rows, self.memory_arr[self.step_count % self.memory_decay_time]]
-                #add current draws to memory
-                self.memory_arr[self.step_count % self.memory_decay_time] = draws
+        if self.step_count == self.memory_decay_time:
+            # when we hit memory decay time, delete all initial urns from memory 
+            self.graph.node_urns -= self.initial_urns
+        
+        rows = cp.arange(self.graph.num_nodes)
+        #if we are at the point where we are removing balls due to memory, find the draws of current step - memory, and subtract their deltas from the urns
+        if self.step_count > self.memory_decay_time:
+            self.graph.node_urns[rows, self.memory_arr[self.step_count % self.memory_decay_time]] -= self.mem_decay[rows, self.memory_arr[self.step_count % self.memory_decay_time]]
+        #add current draws to memory
+        self.memory_arr[self.step_count % self.memory_decay_time] = draws
         return

@@ -89,16 +89,16 @@ def init_urns(b_a, bs):
 num_colors = 2
 initial_nodes = 128
 num_batches = cp_module.array([1024, 512, 256,  64], dtype=cp_module.int32)
-batch_sizes = cp_module.array([   8,  128, 2048, 65536], dtype=cp_module.int32)
+batch_sizes = cp_module.array([   8,  128, 2048, 65536*2], dtype=cp_module.int32)
 #num_batches = cp_module.array([1024, 512, 256,  128], dtype=cp_module.int32)
 #batch_sizes = cp_module.array([   2,  32, 512, 8192], dtype=cp_module.int32)
-barabasi_num_connections = 4
+barabasi_num_connections = 3
 
 num_interventions = 1
 per_intervention_num_injections = 1024
 intervention_deltas=1
 intervener_urn = cp_module.array([1024,0], dtype=cp_module.int32)
-polya_steps = 16384
+polya_steps = 2048
 
 #create initial nodes with 10 red balls, 10 black ball each
 initial_node_urns = cp_module.zeros((initial_nodes, num_colors), dtype=cp_module.int32)
@@ -132,16 +132,27 @@ print(f'CSR build time: {time.time() - csr_time_start:.3f}s')
 print("Running Polya process...")
 polya_start_time = time.time()
 
-polya = Polya_Process(graph)
+polya = Polya_Process(graph, memory_enabled=True, memory_decay_time=256)
 POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', f'{polya_steps}'))
+
+proportion = cp_module.asnumpy(cp_module.zeros((polya_steps,), dtype=cp_module.float32))
 for step_i in range(POLYA_STEPS):
     t0 = time.time()
     polya.step()
     t1 = time.time()
-    if step_i % 1000 == 0: print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
+    if step_i % 100 == 0: print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
+    proportion[step_i] = cp_module.asnumpy(cp_module.mean(graph.node_urns[:, 0] / cp_module.sum(graph.node_urns, axis=1)))
 
 print(f'Polya process complete. Total time: {time.time() - polya_start_time:.3f}s')
 print('TEST_Y_DONE', 'nodes=', graph.num_nodes, 'edges=', graph.num_edges)
+
+import matplotlib.pyplot as plt
+plt.plot(proportion)
+plt.xlabel("Time")
+plt.ylabel("Proportion of Red Balls")
+plt.title("Proportion of Red Balls Over Polya Steps")
+plt.show()
+
 
 # Optional: export urn matrix as CSV
 import numpy as np

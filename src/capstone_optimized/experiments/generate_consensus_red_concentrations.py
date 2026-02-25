@@ -148,7 +148,6 @@ for s in range(0, SCENARIOS):
         arr = np.array(urns_np)
         awarness[s, step_i] = np.sum((arr[:, 0] / (arr[:,0] + arr[:,1]) ) > 0.85) / arr.shape[0] #proportion of nodes with red ball concentration > 85%
         
-
         t1 = time.time()
         print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
 

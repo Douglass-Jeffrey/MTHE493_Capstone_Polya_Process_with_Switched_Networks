@@ -1,9 +1,9 @@
 from ..cupy_fallback import cp, CUPY_AVAILABLE
-
 if CUPY_AVAILABLE:
-    from cupyx.scipy.sparse import csr_matrix
+    from cupyx.scipy.sparse import csr_matrix as cp_sparse
+    from scipy.sparse import csr_matrix as sp_sparse
 else:
-    from scipy.sparse import csr_matrix
+    from scipy.sparse import csr_matrix as cp_sparse
 
 class Graph:
     """
@@ -152,10 +152,23 @@ class Graph:
         if self.num_edges == 0:
             self.adj_matrix = None
         else:
-            rows = self.edges[: self.num_edges, 0]
-            cols = self.edges[: self.num_edges, 1]
-            nnz = int(self.num_edges)
-            self.adj_matrix = csr_matrix(
-                    (cp.ones(nnz, dtype=cp.float32), (rows, cols)),
-                    shape=(self.num_nodes, self.num_nodes),
-                )
+            # if gpu available and we have 10M + edges build csr on cpu instead, much faster than on gpu because of memory availability.
+            if self.num_edges > 10**6 and self.use_gpu:
+                print(f"Building CSR on CPU then moving to GPU")
+                rows = cp.asnumpy(self.edges[: self.num_edges, 0])
+                cols = cp.asnumpy(self.edges[: self.num_edges, 1])
+                nnz = cp.asnumpy(cp.ones(int(self.num_edges), dtype=cp.float32))
+                cpu_csr = sp_sparse((nnz, (rows, cols)), shape=(self.num_nodes, self.num_nodes),)
+
+                # then move back to shared memory and vram
+                gpu_data = cp.array(cpu_csr.data)
+                gpu_indices = cp.array(cpu_csr.indices)
+                gpu_indptr = cp.array(cpu_csr.indptr)
+                self.adj_matrix = cp_sparse((gpu_data, gpu_indices, gpu_indptr), shape=cpu_csr.shape)
+
+            else: #standard build procedure, if cp not available uses np
+                print(f"Building CSR on {'GPU' if self.use_gpu else 'CPU'}")
+                rows = self.edges[: self.num_edges, 0]
+                cols = self.edges[: self.num_edges, 1]
+                nnz = cp.ones(int(self.num_edges), dtype=cp.float32)
+                self.adj_matrix = cp_sparse((nnz, (rows, cols)), shape=(self.num_nodes, self.num_nodes),)

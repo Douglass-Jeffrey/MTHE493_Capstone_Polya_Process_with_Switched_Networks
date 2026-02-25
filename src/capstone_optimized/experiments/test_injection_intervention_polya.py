@@ -14,7 +14,7 @@ except Exception as _e:
     print('Could not import capstone_optimized.cupy_fallback:', _e)
     CUPY_AVAILABLE = False
 
-from capstone_optimized.core import Graph, Polya_Process, Switch_Network_Growth, Switched_Network_Optimized_Graph, Dim_Optimized_Switch_Network_Growth, Barabasi_Albert_Growth, Switch_Network_Intervention
+from capstone_optimized.core import Graph, Polya_Process, Switch_Network_Growth, Switched_Network_Optimized_Graph, Dim_Optimized_Switch_Network_Growth, Barabasi_Albert_Growth, Switch_Network_Injection_Intervention
 
 # If user requests GPU but it's not available in this interpreter, fail fast with guidance
 if not CUPY_AVAILABLE:
@@ -78,27 +78,32 @@ def run_growth_batches(num_batches, batch_size, callback = None):
 
 def init_urns(b_a, bs):
     added_node_urns = cp_module.zeros((bs, b_a.graph.num_colors), dtype=cp_module.int32)
-    added_node_urns[:, 1] = 1
+    #init new urns with 10 red, 10 black
+    added_node_urns[:, 0] = 10
+    added_node_urns[:, 1] = 10
 
     b_a.graph.node_urns = cp_module.vstack([b_a.graph.node_urns, added_node_urns])
     b_a.graph.num_nodes = b_a.graph.num_nodes + bs
     return
 
 num_colors = 2
-initial_nodes = 8
-num_batches = cp_module.array([1024, 512, 256,  128,     64], dtype=cp_module.int32)
-batch_sizes = cp_module.array([   2,  32, 512, 8192, 131072/2], dtype=cp_module.int32)
-barabasi_num_connections = 1
+initial_nodes = 128
+num_batches = cp_module.array([1024, 512, 256,  64], dtype=cp_module.int32)
+batch_sizes = cp_module.array([   8,  128, 2048, 65536], dtype=cp_module.int32)
+#num_batches = cp_module.array([1024, 512, 256,  128], dtype=cp_module.int32)
+#batch_sizes = cp_module.array([   2,  32, 512, 8192], dtype=cp_module.int32)
+barabasi_num_connections = 4
 
-num_interventions = 32
-per_intervention_num_connections = 256
+num_interventions = 1
+per_intervention_num_injections = 1024
 intervention_deltas=1
-intervener_urn = cp_module.array([8,0], dtype=cp_module.int32)
-polya_steps = 1024
+intervener_urn = cp_module.array([1024,0], dtype=cp_module.int32)
+polya_steps = 16384
 
-#create initial nodes with no red balls, 1 black ball each
+#create initial nodes with 10 red balls, 10 black ball each
 initial_node_urns = cp_module.zeros((initial_nodes, num_colors), dtype=cp_module.int32)
-initial_node_urns[:, 1] = 1
+initial_node_urns[:, 0] = 10
+initial_node_urns[:, 1] = 10
 
 graph = Graph(num_nodes=initial_nodes, num_colors=num_colors, use_gpu=True, node_urns=initial_node_urns)
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
@@ -112,10 +117,10 @@ print(f'All growth phases complete. Total growth time: {time.time() - t_growth_s
 
 t_intervention_start = time.time()
 # create intervention class once we are done growing so that intervention has access to complete graph 
-intervention = Switch_Network_Intervention(graph)
-print(f'Starting intervention: {num_interventions} interventions with {per_intervention_num_connections} connections each...')
+intervention = Switch_Network_Injection_Intervention(graph)
+print(f'Starting intervention: {num_interventions} interventions with {per_intervention_num_injections} injections of urn: {intervener_urn}...')
 for i in range(num_interventions):
-    intervention.degree_centrality_optimized_intervention_step(num_connections=per_intervention_num_connections, intervener_urn=intervener_urn)
+    intervention.degree_centrality_optimized_intervention_step(num_injections=per_intervention_num_injections, intervener_urn=intervener_urn)
 print(f'Intervention complete. Total time: {time.time() - t_intervention_start:.3f}s')
 
 print("Building CSR adjacency matrix...")
@@ -127,17 +132,16 @@ print(f'CSR build time: {time.time() - csr_time_start:.3f}s')
 print("Running Polya process...")
 polya_start_time = time.time()
 
-polya = Polya_Process(graph, delta=1)
+polya = Polya_Process(graph)
 POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', f'{polya_steps}'))
 for step_i in range(POLYA_STEPS):
     t0 = time.time()
     polya.step()
     t1 = time.time()
-    print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
+    if step_i % 1000 == 0: print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
 
 print(f'Polya process complete. Total time: {time.time() - polya_start_time:.3f}s')
 print('TEST_Y_DONE', 'nodes=', graph.num_nodes, 'edges=', graph.num_edges)
-
 
 # Optional: export urn matrix as CSV
 import numpy as np

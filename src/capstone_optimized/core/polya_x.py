@@ -5,9 +5,19 @@ class Polya_Process:
     """
     Fully vectorized Polya process for all nodes.
     """
-    def __init__(self, graph: Graph, delta=1):
+    def __init__(self, graph: Graph, delta=None, memory_enabled = False, memory_decay_time=0):
         self.graph = graph
-        self.delta = delta
+        self.step_count = 1
+        if delta == None:
+            self.delta = cp.ones((self.graph.num_nodes, self.graph.num_colors), dtype=cp.int32)
+        else:
+            self.delta = delta
+        self.memory_enabled = memory_enabled
+        if self.memory_enabled != False:
+            self.memory_decay_time = memory_decay_time
+            self.memory_arr = cp.zeros((self.memory_decay_time, self.graph.num_nodes), dtype=cp.int32)
+            self.initial_urns = self.graph.node_urns.copy()
+
 
     def step(self):
         mega = self.graph.get_mega_urns()  # num_nodes x num_colors)
@@ -37,4 +47,23 @@ class Polya_Process:
 
         # Vectorized urn update 
         rows = cp.arange(self.graph.num_nodes)
-        self.graph.node_urns[rows, draws] += self.delta
+        self.graph.node_urns[rows, draws] += self.delta[rows, draws]
+
+        if self.memory_enabled:
+            self.memory_step(draws)
+        self.step_count += 1
+        
+    def memory_step(self, draws):
+        if self.step_count < self.memory_decay_time:
+            self.memory_arr[self.step_count] = draws
+        else:
+            if self.step_count == self.memory_decay_time:
+                # when we hit memory decay time, delete all initial urns from memory 
+                self.graph.node_urns -= self.initial_urns
+            else: 
+                rows = cp.arange(self.graph.num_nodes)
+                #if we are at the point where we are removing balls due to memory, find the draws of current step - memory, and subtract their deltas from the urns 
+                self.graph.node_urns[rows, self.memory_arr[self.step_count % self.memory_decay_time]] -= self.delta[rows, self.memory_arr[self.step_count % self.memory_decay_time]]
+                #add current draws to memory
+                self.memory_arr[self.step_count % self.memory_decay_time] = draws
+        return

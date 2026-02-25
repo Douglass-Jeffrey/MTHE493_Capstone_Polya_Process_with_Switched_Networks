@@ -1,9 +1,10 @@
 from ..cupy_fallback import cp
 from .graph_x import Graph
 
-class Switch_Network_Intervention:
+class Switch_Network_Node_Growth_Intervention:
     """
-    Inject balls into nodes on a graph to influence Polya process dynamics.
+    Add new red biased nodes to the graph that will connect to the highest degree nodes.
+    This is "Method 1"
     """
     def __init__(self, graph: Graph):
         self.graph = graph
@@ -17,13 +18,11 @@ class Switch_Network_Intervention:
     def degree_centrality_optimized_intervention_step(self, num_connections=1, intervention_deltas=1, intervener_urn=None):
         """
         At each intervention step, we create a new node on the graph with num_connections # edges
-        connecting to existing nodes. Each connected node will receive intervention_deltas # balls, and
+        connecting to existing nodes. Each connected node's mega urn will thus include intervener_urn, and
         the new intervener node will have a node_urn defined by intervener_urn.
 
         This function will select targets for the intervener node based on degree centrality, connecting to
         the #num_connections highest degree nodes on the graph in descending order
-
-        We could probably make this function better, we dont need to do the flatten, binary count, and argsort every time
         """
         # cast intervener_urn if necessary
         if intervener_urn is None:

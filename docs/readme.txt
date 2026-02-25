@@ -81,7 +81,7 @@ Next steps 2025-11-26:
   From here we want to 
 
 Dev log: 2026-02-01:
-  Finished batched Barabasi-Alber growth class, updated code in a bunch of places to be faster.
+  Finished batched Barabasi-Albert growth class, updated code in a bunch of places to be faster.
   Also implemented first intervention strategy (primitive selection of highest degree nodes)
   Did some testing and found that running BA with a set of batches with exp growing batch size is fastest.
 
@@ -94,6 +94,12 @@ Dev log: 2026-02-01:
   Next steps are doing the above and also considering using CUDA streams, or finding a way to use 
   shared video memory and remaining system RAM for the design. This is especially important for the polya
   which slows down greatly at high node counts. 
+
+  ALSO TODO new thought for the implementation of the highest degree first intervention:
+    Instead of adding a new node with lots of red balls then connecting to key nodes, running polya we could
+    just directly dump a bunch of red balls into those key nodes, and change their deltas, this would make it
+    MUCH easier to implement the intervention step between polya steps, since we wouldnt have to recompile 
+    the CSR matrix every time, discuss in meeting with advisor
 
 
   

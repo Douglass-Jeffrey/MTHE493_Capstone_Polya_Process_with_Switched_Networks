@@ -47,7 +47,6 @@ class Barabasi_Albert_Growth:
             self.stubs[:count] = flat_edges
             self.num_stubs = count
 
-
     def _ensure_stubs_capacity(self, needed_extra):
         """Checks if stubs array needs resizing and handles it efficiently."""
         needed_total = self.num_stubs + needed_extra

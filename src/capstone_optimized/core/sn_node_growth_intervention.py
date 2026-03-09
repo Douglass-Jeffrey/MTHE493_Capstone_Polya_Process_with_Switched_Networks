@@ -13,7 +13,7 @@ class Switch_Network_Node_Growth_Intervention:
         self.active_buffer = self.graph.edges[:self.graph.num_edges].flatten()
         self.degrees = cp.bincount(self.active_buffer, minlength=self.graph.num_nodes)
         self.degree_ordered_nodes = cp.flip(cp.argsort(self.degrees))
-        print(f"degree_ordered_nodes: {self.degree_ordered_nodes}")
+        #print(f"degree_ordered_nodes: {self.degree_ordered_nodes}")
 
     def degree_centrality_optimized_intervention_step(self, num_connections=1, intervention_deltas=1, intervener_urn=None):
         """
@@ -48,7 +48,7 @@ class Switch_Network_Node_Growth_Intervention:
         self.graph.add_edges(src, dst)
         self.graph.add_edges(dst, src)
 
-        print(f" injected intervention node {new_node_id} connected to nodes {dst} ")
+        #print(f" injected intervention node {new_node_id} connected to nodes {dst} ")
         #print(f" Target Hub IDs: {top_hubs}")
             
     #djeffrey TODO

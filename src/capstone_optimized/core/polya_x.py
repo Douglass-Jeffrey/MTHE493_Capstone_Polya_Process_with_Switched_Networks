@@ -5,7 +5,7 @@ class Polya_Process:
     """
     Fully vectorized Polya process for all nodes.
     """
-    def __init__(self, graph: Graph, delta=None, memory_enabled = False, memory_decay_time=0, mem_decay = None):
+    def __init__(self, graph: Graph, delta=None, memory_enabled = False, memory_decay_time=0, mem_decay = None, remove_initial_urns = False):
         self.graph = graph
         self.step_count = 1
         if delta is None:
@@ -16,7 +16,9 @@ class Polya_Process:
         if self.memory_enabled != False:
             self.memory_decay_time = memory_decay_time
             self.memory_arr = cp.zeros((self.memory_decay_time, self.graph.num_nodes), dtype=cp.int32)
-            self.initial_urns = self.graph.node_urns.copy()
+            self.remove_initial_urns = remove_initial_urns
+            if self.remove_initial_urns != False:
+                self.initial_urns = self.graph.node_urns.copy()
             if mem_decay is None:
                 self.mem_decay = cp.ones((self.graph.num_nodes, self.graph.num_colors), dtype=cp.int32)
             else:
@@ -62,7 +64,7 @@ class Polya_Process:
         self.step_count += 1
         
     def memory_step(self, draws):
-        if self.step_count == self.memory_decay_time:
+        if ((self.step_count == self.memory_decay_time) and self.remove_initial_urns != False):
             # when we hit memory decay time, delete all initial urns from memory 
             self.graph.node_urns -= self.initial_urns
         

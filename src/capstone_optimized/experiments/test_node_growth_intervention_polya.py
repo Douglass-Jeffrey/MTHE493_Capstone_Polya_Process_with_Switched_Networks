@@ -87,18 +87,20 @@ def init_urns(b_a, bs):
     return
 
 num_colors = 2
-initial_nodes = 128
-num_batches = cp_module.array([1024, 512, 256,  64], dtype=cp_module.int32)
-batch_sizes = cp_module.array([   8,  128, 2048, 65536*2], dtype=cp_module.int32)
-#num_batches = cp_module.array([1024, 512, 256,  128], dtype=cp_module.int32)
-#batch_sizes = cp_module.array([   2,  32, 512, 8192], dtype=cp_module.int32)
+initial_nodes = 64
+num_batches = cp_module.array([256, 256, 256, 128], dtype=cp_module.int32) #128
+batch_sizes = cp_module.array([   8,  256, 8192, 65536], dtype=cp_module.int32) #65536
 barabasi_num_connections = 3
 
-num_interventions = 64
-per_intervention_num_connections = 1024
-intervention_deltas=1
-intervener_urn = cp_module.array([1024,0], dtype=cp_module.int32)
-polya_steps = 1024
+num_interventions = 1024
+per_intervention_num_connections = 1024*2*2
+intervener_urn = cp_module.array([256,1], dtype=cp_module.int32)
+
+polya_steps = 360*2
+memory_enabled = True
+memory_decay_time = 256
+delta_gain = 4
+mem_decay_loss = 1
 
 #create initial nodes with 10 red balls, 10 black ball each
 initial_node_urns = cp_module.zeros((initial_nodes, num_colors), dtype=cp_module.int32)
@@ -132,38 +134,58 @@ print(f'CSR build time: {time.time() - csr_time_start:.3f}s')
 print("Running Polya process...")
 polya_start_time = time.time()
 
-deltas = cp_module.full((graph.num_nodes, graph.num_colors), 10, dtype=cp_module.int32)
-mem_decay = cp_module.full((graph.num_nodes, graph.num_colors), 1, dtype=cp_module.int32)
+deltas = cp_module.full((graph.num_nodes, graph.num_colors), delta_gain, dtype=cp_module.int32)
+mem_decay = cp_module.full((graph.num_nodes, graph.num_colors), mem_decay_loss, dtype=cp_module.int32)
 
-polya = Polya_Process(graph, delta=deltas, memory_enabled=True, memory_decay_time=256, mem_decay=mem_decay)
+polya = Polya_Process(graph, memory_enabled=memory_enabled, memory_decay_time=memory_decay_time, delta=deltas, mem_decay=mem_decay)
 POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', f'{polya_steps}'))
 
-proportion = cp_module.asnumpy(cp_module.zeros((polya_steps,), dtype=cp_module.float32))
-
+num_bins = 100
+hist_bins = cp_module.asnumpy(cp_module.linspace(0, 1, num_bins+1))
+hist_data = cp_module.asnumpy(cp_module.zeros((polya_steps, num_bins)))
 for step_i in range(POLYA_STEPS):
     t0 = time.time()
     polya.step()
     t1 = time.time()
-    if step_i % 100 == 0: print(f'Polya step {step_i+1}/{POLYA_STEPS} time={t1-t0:.3f}s')
-    proportion[step_i] = cp_module.asnumpy(cp_module.mean(graph.node_urns[:, 0] / cp_module.sum(graph.node_urns, axis=1)))
+
+    #collect data
+    probs = ((graph.node_urns[:, 0] / cp_module.sum(graph.node_urns, axis=1)))
+    hist_i, _ = cp_module.histogram(probs, hist_bins)
+    hist_data[step_i] = cp_module.asnumpy(hist_i)
+
+    #print info
+    if step_i % 100 == 0: print(f'Polya step {step_i}/{POLYA_STEPS} time={t1-t0:.3f}s')
 
 print(f'Polya process complete. Total time: {time.time() - polya_start_time:.3f}s')
 print('TEST_Y_DONE', 'nodes=', graph.num_nodes, 'edges=', graph.num_edges)
 
+row_sums = hist_data.sum(axis=1, keepdims=True)
+hist_norm = hist_data/row_sums
+vmax_val = float(cp_module.percentile(cp_module.array(hist_norm), 99))
+
+
 import matplotlib.pyplot as plt
-plt.plot(proportion)
-plt.xlabel("Time")
-plt.ylabel("Proportion of Red Balls")
-plt.title("Proportion of Red Balls Over Polya Steps")
+plt.figure(figsize=(12, 6))
+
+# We transpose so Time is on the X-axis and Probability is on the Y-axis
+# origin='lower' ensures 0.0 probability is at the bottom
+plt.imshow(hist_norm.T, aspect='auto', origin='lower', 
+            extent=[0, hist_norm.shape[0], 0, 1], cmap='magma', vmax=vmax_val)
+plt.colorbar(label='Proportion of Nodes')
+plt.title("Evolution of Red Probability Distribution")
+plt.xlabel("Polya Process Steps")
+plt.ylabel("Probability of Red (P_i)")
 plt.show()
 
 
 # Optional: export urn matrix as CSV
+"""
 import numpy as np
 urns_np = graph.node_urns
 if hasattr(urns_np, 'get'):  # if CuPy array
     urns_np = urns_np.get()
 np.savetxt("node_urns.csv", urns_np, delimiter=",", fmt="%d")
+"""
 """
 # Optional: export adjacency matrix as CSV in COO format
 from scipy.sparse import csr_matrix

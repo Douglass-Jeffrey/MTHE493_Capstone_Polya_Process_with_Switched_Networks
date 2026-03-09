@@ -13,9 +13,9 @@ class Switch_Network_Injection_Intervention:
         self.active_buffer = self.graph.edges[:self.graph.num_edges].flatten()
         self.degrees = cp.bincount(self.active_buffer, minlength=self.graph.num_nodes)
         self.degree_ordered_nodes = cp.flip(cp.argsort(self.degrees))
-        print(f"degree_ordered_nodes: {self.degree_ordered_nodes}")
+        #print(f"degree_ordered_nodes: {self.degree_ordered_nodes}")
 
-    def degree_centrality_optimized_intervention_step(self, num_injections=1, intervention_deltas=1, intervener_urn=None):
+    def degree_centrality_optimized_intervention_step(self, num_injections=1, intervener_urn=None):
         """
         At each intervention step, select #num connections highest degree nodes from the graph.
         Each node's urn will be directly injected with the balls contained in intervener_urn
@@ -36,6 +36,6 @@ class Switch_Network_Injection_Intervention:
         self.graph.node_urns[dst] += intervener_urn
         # add num injections to num interventions so that we inject on subsequent highest nodes on future injections
         self.current_num_interventions += num_injections
-        print(f" injected intervention urn: {intervener_urn} into nodes: {dst}")
+        #print(f" injected intervention urn: {intervener_urn} into nodes: {dst}")
         
 

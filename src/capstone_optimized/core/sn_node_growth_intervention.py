@@ -17,7 +17,14 @@ class Switch_Network_Node_Growth_Intervention:
         #print(f"degree_ordered_nodes: {self.degree_ordered_nodes}")
 
     def degree_centrality_optimized_intervention_step(self, num_connections=1, intervener_urn=None, mid_polya_intervention=False, polya_process=None, num_interventions=1):
+        """
+        At each intervention step, we create num_interventions node(s) on the graph with num_connections # edges
+        connecting to existing nodes. Each connected node's mega urn will thus include intervener_urn, and
+        the new intervener node will have a node_urn defined by intervener_urn.
 
+        This function will select targets for the intervener node based on degree centrality, connecting to
+        the #num_connections highest degree nodes on the graph in descending order
+        """
         if intervener_urn is None:
             intervener_urn = cp.ones((self.graph.num_colors,), dtype=cp.int32)
 
@@ -83,67 +90,3 @@ class Switch_Network_Node_Growth_Intervention:
 
             #rebuild csr when all is done in order to do next polya steps
             self.graph.build_csr()
-
-    def degree_centrality_optimized_intervention_step_1(self, num_connections=1, intervener_urn=None, mid_polya_intervention = False, polya_process = None, num_interventions = 1):
-        """
-        At each intervention step, we create a new node on the graph with num_connections # edges
-        connecting to existing nodes. Each connected node's mega urn will thus include intervener_urn, and
-        the new intervener node will have a node_urn defined by intervener_urn.
-
-        This function will select targets for the intervener node based on degree centrality, connecting to
-        the #num_connections highest degree nodes on the graph in descending order
-        """
-        for i in range(num_interventions):
-            print(f"iter {i}")
-            # cast intervener_urn if necessary
-            if intervener_urn is None:
-                intervener_urn = cp.ones((1, self.graph.num_colors), dtype=cp.int32)
-            if not hasattr(intervener_urn, 'dtype'): intervener_urn = cp.array(intervener_urn, dtype=self.graph.node_urns.dtype)
-            new_node_id = self.graph.num_nodes
-            self.graph.num_nodes += 1
-
-            if intervener_urn.shape[0] != self.graph.num_colors:
-                raise ValueError(f"Urn size mismatch. Expected {self.graph.num_colors}, got {intervener_urn.shape[0]}")
-
-            #add intervener node to existing list
-            self.graph.node_urns = cp.vstack([self.graph.node_urns, intervener_urn])
-
-            # connect new node to best available choices
-            src = cp.full(num_connections, new_node_id, dtype=cp.int32)
-            dst = self.degree_ordered_nodes[self.current_num_interventions:self.current_num_interventions + num_connections]
-
-            #increment counter so we know not to reconnect to the same nodes
-            if self.once_per_node_iv == True:
-                self.current_num_interventions += num_connections
-
-            # add edges
-            self.graph.add_edges(src, dst)
-            self.graph.add_edges(dst, src)
-
-            #rebuild the csr to handle the new edges we added 
-            if (mid_polya_intervention == True):
-                if polya_process == None:
-                    raise ValueError(f"Error: need polya_process object to update memory tables when mid_polya_intervention == True")
-                else:
-                    #update memory array adding a column of zeros (one for each timeslot) concerning the newly added intervening node
-                    polya_process.memory_arr = cp.hstack((polya_process.memory_arr, cp.zeros((polya_process.memory_decay_time, 1), dtype=cp.int32)))
-                    #update mem_decay and delta to include the new node
-                    new_delta_row = cp.copy(polya_process.delta[0])
-                    polya_process.delta = cp.vstack((polya_process.delta, new_delta_row))
-                    new_decay_row = cp.copy(polya_process.mem_decay[0])
-                    polya_process.mem_decay = cp.vstack((polya_process.mem_decay, new_decay_row))
-        
-        if (mid_polya_intervention == True):
-            self.graph.build_csr()
-
-
-
-
-
-        #print(f" injected intervention node {new_node_id} connected to nodes {dst} ")
-        #print(f" Target Hub IDs: {top_hubs}")
-            
-    #djeffrey TODO
-    #def manual_intervention_step(self, intervention_nodes):
-        
-

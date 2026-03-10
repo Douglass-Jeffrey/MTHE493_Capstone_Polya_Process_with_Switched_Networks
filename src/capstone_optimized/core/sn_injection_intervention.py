@@ -6,9 +6,10 @@ class Switch_Network_Injection_Intervention:
     Inject balls directly highest degree graph nodes
     This is "Method 2"
     """
-    def __init__(self, graph: Graph):
+    def __init__(self, graph: Graph, once_per_node_iv = True):
         self.graph = graph
         self.current_num_interventions = 0
+        self.once_per_node_iv = once_per_node_iv
         # information about the edge buffer and degrees of each node in the graph
         self.active_buffer = self.graph.edges[:self.graph.num_edges].flatten()
         self.degrees = cp.bincount(self.active_buffer, minlength=self.graph.num_nodes)
@@ -35,7 +36,8 @@ class Switch_Network_Injection_Intervention:
         dst = self.degree_ordered_nodes[self.current_num_interventions:self.current_num_interventions + num_injections]
         self.graph.node_urns[dst] += intervener_urn
         # add num injections to num interventions so that we inject on subsequent highest nodes on future injections
-        self.current_num_interventions += num_injections
+        if (self.once_per_node_iv):
+            self.current_num_interventions += num_injections
         #print(f" injected intervention urn: {intervener_urn} into nodes: {dst}")
         
 

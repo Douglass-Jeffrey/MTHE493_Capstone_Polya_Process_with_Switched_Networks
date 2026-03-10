@@ -91,15 +91,15 @@ num_colors = 2
 initial_nodes = 64
 num_batches = cp_module.array([256, 256, 256, 128], dtype=cp_module.int32) #128
 batch_sizes = cp_module.array([   8,  256, 8192, 65536], dtype=cp_module.int32) #65536
-barabasi_num_connections = 3
+barabasi_num_connections = 5
 
 num_interventions = 1
-per_intervention_num_injections = 131072*2*2*2
-intervener_urn = cp_module.array([90,0], dtype=cp_module.int32)
+per_intervention_num_injections = 131072
+intervener_urn = cp_module.array([100,0], dtype=cp_module.int32)
 
-polya_steps = 360
-memory_enabled = False
-memory_decay_time = 256
+polya_steps = 720
+memory_enabled = True
+memory_decay_time = 72
 delta_gain = 1
 mem_decay_loss = 1
 
@@ -121,11 +121,11 @@ print(f'All growth phases complete. Total growth time: {time.time() - t_growth_s
 
 t_intervention_start = time.time()
 # create intervention class once we are done growing so that intervention has access to complete graph 
-intervention = Switch_Network_Injection_Intervention(graph)
-print(f'Starting intervention: {num_interventions} interventions with {per_intervention_num_injections} injections of urn: {intervener_urn}...')
-for i in range(num_interventions):
-    intervention.degree_centrality_optimized_intervention_step(num_injections=per_intervention_num_injections, intervener_urn=intervener_urn)
-print(f'Intervention complete. Total time: {time.time() - t_intervention_start:.3f}s')
+intervention = Switch_Network_Injection_Intervention(graph, once_per_node_iv = False)
+#print(f'Starting intervention: {num_interventions} interventions with {per_intervention_num_injections} injections of urn: {intervener_urn}...')
+#for i in range(num_interventions):
+#    intervention.degree_centrality_optimized_intervention_step(num_injections=per_intervention_num_injections, intervener_urn=intervener_urn)
+#print(f'Intervention complete. Total time: {time.time() - t_intervention_start:.3f}s')
 
 print("Building CSR adjacency matrix...")
 csr_time_start = time.time()
@@ -143,7 +143,7 @@ mem_decay = cp_module.full((graph.num_nodes, graph.num_colors), mem_decay_loss, 
 polya = Polya_Process(graph, memory_enabled=memory_enabled, memory_decay_time=memory_decay_time, delta=deltas, mem_decay=mem_decay)
 POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', f'{polya_steps}'))
 
-num_bins = 100
+num_bins = 80
 hist_bins = cp_module.asnumpy(cp_module.linspace(0, 1, num_bins+1))
 hist_data = cp_module.asnumpy(cp_module.zeros((polya_steps, num_bins)))
 for step_i in range(POLYA_STEPS):
@@ -156,8 +156,13 @@ for step_i in range(POLYA_STEPS):
     hist_i, _ = cp_module.histogram(probs, hist_bins)
     hist_data[step_i] = cp_module.asnumpy(hist_i)
 
+    if step_i == 360:
+        intervention.degree_centrality_optimized_intervention_step(num_injections=per_intervention_num_injections, intervener_urn=intervener_urn)
+        print(f'current num_interventions = {intervention.current_num_interventions}')
+
     #print info
-    if step_i % 100 == 0: print(f'Polya step {step_i}/{POLYA_STEPS} time={t1-t0:.3f}s')
+    if step_i % 100 == 0:
+        print(f'Polya step {step_i}/{POLYA_STEPS} time={t1-t0:.3f}s')
 
 print(f'Polya process complete. Total time: {time.time() - polya_start_time:.3f}s')
 print('TEST_Y_DONE', 'nodes=', graph.num_nodes, 'edges=', graph.num_edges)
@@ -165,6 +170,8 @@ print('TEST_Y_DONE', 'nodes=', graph.num_nodes, 'edges=', graph.num_edges)
 row_sums = hist_data.sum(axis=1, keepdims=True)
 hist_norm = hist_data/row_sums
 vmax_val = float(cp_module.percentile(cp_module.array(hist_norm), 99))
+vmin_val = float(cp_module.percentile(cp_module.array(hist_norm), 1))
+
 
 
 import matplotlib.pyplot as plt
@@ -173,7 +180,7 @@ plt.figure(figsize=(12, 6))
 # We transpose so Time is on the X-axis and Probability is on the Y-axis
 # origin='lower' ensures 0.0 probability is at the bottom
 plt.imshow(hist_norm.T, aspect='auto', origin='lower', 
-            extent=[0, hist_norm.shape[0], 0, 1], cmap='magma', vmax=vmax_val)
+            extent=[0, hist_norm.shape[0], 0, 1], cmap='magma', vmin=vmin_val, vmax=vmax_val)
 plt.colorbar(label='Proportion of Nodes')
 plt.title("Evolution of Red Probability Distribution")
 plt.xlabel("Polya Process Steps")

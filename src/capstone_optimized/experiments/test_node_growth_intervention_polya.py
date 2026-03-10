@@ -79,8 +79,8 @@ def run_growth_batches(num_batches, batch_size, callback = None):
 def init_urns(b_a, bs):
     added_node_urns = cp_module.zeros((bs, b_a.graph.num_colors), dtype=cp_module.int32)
     #init new urns with 10 red, 10 black
-    added_node_urns[:, 0] = 10
-    added_node_urns[:, 1] = 10
+    added_node_urns[:, 0] = 5
+    added_node_urns[:, 1] = 5
 
     b_a.graph.node_urns = cp_module.vstack([b_a.graph.node_urns, added_node_urns])
     b_a.graph.num_nodes = b_a.graph.num_nodes + bs
@@ -88,24 +88,24 @@ def init_urns(b_a, bs):
 
 num_colors = 2
 initial_nodes = 64
-num_batches = cp_module.array([256, 256, 256, 128], dtype=cp_module.int32) #128
-batch_sizes = cp_module.array([   8,  256, 8192, 65536], dtype=cp_module.int32) #65536
-barabasi_num_connections = 3
+num_batches = cp_module.array([256, 256, 256, ], dtype=cp_module.int32) #128
+batch_sizes = cp_module.array([   8,  256, 8192, ], dtype=cp_module.int32) #65536
+barabasi_num_connections = 5
 
 num_interventions = 1024
-per_intervention_num_connections = 1024*2*2
-intervener_urn = cp_module.array([256,1], dtype=cp_module.int32)
+per_intervention_num_connections = 131072
+intervener_urn = cp_module.array([1000,1], dtype=cp_module.int32)
 
-polya_steps = 360*2
+polya_steps = 720
 memory_enabled = True
-memory_decay_time = 256
-delta_gain = 4
+memory_decay_time = 72
+delta_gain = 1
 mem_decay_loss = 1
 
 #create initial nodes with 10 red balls, 10 black ball each
 initial_node_urns = cp_module.zeros((initial_nodes, num_colors), dtype=cp_module.int32)
-initial_node_urns[:, 0] = 10
-initial_node_urns[:, 1] = 10
+initial_node_urns[:, 0] = 5
+initial_node_urns[:, 1] = 5
 
 graph = Graph(num_nodes=initial_nodes, num_colors=num_colors, use_gpu=True, node_urns=initial_node_urns)
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
@@ -119,11 +119,11 @@ print(f'All growth phases complete. Total growth time: {time.time() - t_growth_s
 
 t_intervention_start = time.time()
 # create intervention class once we are done growing so that intervention has access to complete graph 
-intervention = Switch_Network_Node_Growth_Intervention(graph)
-print(f'Starting intervention: {num_interventions} interventions with {per_intervention_num_connections} connections each...')
-for i in range(num_interventions):
-    intervention.degree_centrality_optimized_intervention_step(num_connections=per_intervention_num_connections, intervener_urn=intervener_urn)
-print(f'Intervention complete. Total time: {time.time() - t_intervention_start:.3f}s')
+intervention = Switch_Network_Node_Growth_Intervention(graph, once_per_node_iv = False)
+#print(f'Starting intervention: {num_interventions} interventions with {per_intervention_num_connections} connections each...')
+#for i in range(num_interventions):
+#    intervention.degree_centrality_optimized_intervention_step(num_connections=per_intervention_num_connections, intervener_urn=intervener_urn)
+#print(f'Intervention complete. Total time: {time.time() - t_intervention_start:.3f}s')
 
 print("Building CSR adjacency matrix...")
 csr_time_start = time.time()
@@ -140,7 +140,7 @@ mem_decay = cp_module.full((graph.num_nodes, graph.num_colors), mem_decay_loss, 
 polya = Polya_Process(graph, memory_enabled=memory_enabled, memory_decay_time=memory_decay_time, delta=deltas, mem_decay=mem_decay)
 POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', f'{polya_steps}'))
 
-num_bins = 100
+num_bins = 80
 hist_bins = cp_module.asnumpy(cp_module.linspace(0, 1, num_bins+1))
 hist_data = cp_module.asnumpy(cp_module.zeros((polya_steps, num_bins)))
 for step_i in range(POLYA_STEPS):
@@ -152,6 +152,11 @@ for step_i in range(POLYA_STEPS):
     probs = ((graph.node_urns[:, 0] / cp_module.sum(graph.node_urns, axis=1)))
     hist_i, _ = cp_module.histogram(probs, hist_bins)
     hist_data[step_i] = cp_module.asnumpy(hist_i)
+    
+    if step_i == 360:
+            intervention.degree_centrality_optimized_intervention_step(num_connections=per_intervention_num_connections, intervener_urn=intervener_urn, mid_polya_intervention=True, polya_process=polya, num_interventions = num_interventions)
+            print(f'current num_interventions = {intervention.current_num_interventions}')
+
 
     #print info
     if step_i % 100 == 0: print(f'Polya step {step_i}/{POLYA_STEPS} time={t1-t0:.3f}s')

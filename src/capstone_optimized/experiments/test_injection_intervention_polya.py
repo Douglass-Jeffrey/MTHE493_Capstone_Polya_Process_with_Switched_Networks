@@ -80,8 +80,8 @@ def init_urns(b_a, bs):
     #added_node_urns = rng.integers(0, 9, size=(bs, b_a.graph.num_colors))
     added_node_urns = cp_module.zeros((bs, b_a.graph.num_colors), dtype=cp_module.int32)
     #init new urns with 8 red, 8 black
-    added_node_urns[:, 0] = 5
-    added_node_urns[:, 1] = 5
+    added_node_urns[:, 0] = 1
+    added_node_urns[:, 1] = 1
 
     b_a.graph.node_urns = cp_module.vstack([b_a.graph.node_urns, added_node_urns])
     b_a.graph.num_nodes = b_a.graph.num_nodes + bs
@@ -95,19 +95,19 @@ barabasi_num_connections = 5
 
 num_interventions = 1
 per_intervention_num_injections = 131072
-intervener_urn = cp_module.array([100,0], dtype=cp_module.int32)
+intervener_urn = cp_module.array([1000,0], dtype=cp_module.int32)
 
-polya_steps = 720
+polya_steps = 1000
 memory_enabled = True
-memory_decay_time = 72
+memory_decay_time = 100
 delta_gain = 1
 mem_decay_loss = 1
 
 #create initial nodes with 8 red balls, 8 black ball each
 #initial_node_urns = rng.integers(0, 9, size=(initial_nodes, num_colors))
 initial_node_urns = cp_module.zeros((initial_nodes, num_colors), dtype=cp_module.int32)
-initial_node_urns[:, 0] = 5
-initial_node_urns[:, 1] = 5
+initial_node_urns[:, 0] = 1
+initial_node_urns[:, 1] = 1
 
 graph = Graph(num_nodes=initial_nodes, num_colors=num_colors, use_gpu=True, node_urns=initial_node_urns)
 # Grow network in batches (safe mode: retries with smaller batch sizes on OOM)
@@ -143,7 +143,7 @@ mem_decay = cp_module.full((graph.num_nodes, graph.num_colors), mem_decay_loss, 
 polya = Polya_Process(graph, memory_enabled=memory_enabled, memory_decay_time=memory_decay_time, delta=deltas, mem_decay=mem_decay)
 POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', f'{polya_steps}'))
 
-num_bins = 80
+num_bins = 50
 hist_bins = cp_module.asnumpy(cp_module.linspace(0, 1, num_bins+1))
 hist_data = cp_module.asnumpy(cp_module.zeros((polya_steps, num_bins)))
 for step_i in range(POLYA_STEPS):
@@ -156,7 +156,7 @@ for step_i in range(POLYA_STEPS):
     hist_i, _ = cp_module.histogram(probs, hist_bins)
     hist_data[step_i] = cp_module.asnumpy(hist_i)
 
-    if step_i == 360:
+    if step_i == 200:
         intervention.degree_centrality_optimized_intervention_step(num_injections=per_intervention_num_injections, intervener_urn=intervener_urn)
         print(f'current num_interventions = {intervention.current_num_interventions}')
 
@@ -187,15 +187,15 @@ plt.xlabel("Polya Process Steps")
 plt.ylabel("Probability of Red (P_i)")
 plt.show()
 
-"""
+
 # Optional: export urn matrix as CSV
 
 import numpy as np
-urns_np = proportions
+urns_np = hist_data
 if hasattr(urns_np, 'get'):  # if CuPy array
     urns_np = urns_np.get()
-np.savetxt("t7_1_64_1048576.csv", urns_np, delimiter=",", fmt="%d")
-"""
+np.savetxt("hist_data.csv", urns_np, delimiter=",", fmt="%d")
+
 """
 # Optional: export adjacency matrix as CSV in COO format
 from scipy.sparse import csr_matrix

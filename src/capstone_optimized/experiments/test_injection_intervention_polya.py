@@ -89,17 +89,17 @@ def init_urns(b_a, bs):
 
 num_colors = 2
 initial_nodes = 64
-num_batches = cp_module.array([256, 256, 256, 128], dtype=cp_module.int32) #128
-batch_sizes = cp_module.array([   8,  256, 8192, 65536], dtype=cp_module.int32) #65536
-barabasi_num_connections = 5
+num_batches = cp_module.array([256, 256, 256, ], dtype=cp_module.int32) #128
+batch_sizes = cp_module.array([   8,  256, 8192, ], dtype=cp_module.int32) #65536
+barabasi_num_connections = 3
 
 num_interventions = 1
-per_intervention_num_injections = 131072
+per_intervention_num_injections = 131072/2/2
 intervener_urn = cp_module.array([1000,0], dtype=cp_module.int32)
 
-polya_steps = 1000
+polya_steps = 720
 memory_enabled = True
-memory_decay_time = 100
+memory_decay_time = 72
 delta_gain = 1
 mem_decay_loss = 1
 

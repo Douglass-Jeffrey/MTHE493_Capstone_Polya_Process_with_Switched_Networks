@@ -1,0 +1,5 @@
+num_colors,initial_nodes,barabasi_num_connections,num_batches,batch_sizes,init_urn_red,init_urn_black,intervention_class,intervention_method,num_interventions,intervention_steps,once_per_node_iv,num_injections,intervener_urn_red,intervener_urn_black,num_connections,polya_steps,memory_enabled,memory_decay_time,delta_gain,mem_decay_loss,num_bins,output_dir
+2,64,3,256;256;256;128,8;256;8192;65536,1,1,Switch_Network_Injection_Intervention,degree_centrality_optimized_intervention_step,1,144,False|True,32768,1000,0,4,864,True,72,1,1,50,results
+2,64,3,256;256;256;128,8;256;8192;65536,1,1,Switch_Network_Injection_Intervention,eigenvector_centrality_optimized_intervention_step,1,144,False|True,32768,1000,0,4,864,True,72,1,1,50,results
+2,64,3,256;256;256;128,8;256;8192;65536,1,1,Switch_Network_Node_Growth_Intervention,degree_centrality_optimized_intervention_step,1,144,False|True,32768,1000,0,4,864,True,72,1,1,50,results
+2,64,3,256;256;256;128,8;256;8192;65536,1,1,Switch_Network_Node_Growth_Intervention,random_intervention_step,1,144,False|True,32768,1000,0,4,864,True,72,1,1,50,results

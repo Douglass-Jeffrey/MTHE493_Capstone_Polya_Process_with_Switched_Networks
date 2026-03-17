@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gc
 import itertools
 import json
 import os
@@ -493,6 +494,23 @@ def run_simulation(cfg: SimulationConfig, run_label: str) -> None:
         f"  Run '{run_label}' complete.  "
         f"nodes={graph.num_nodes}  edges={graph.num_edges}"
     )
+
+    # --- Explicit cleanup to free GPU memory before the next run ---
+    # CuPy arrays are not released until both Python's GC and the CuPy memory
+    # pool are flushed, so we do both explicitly here.
+    del graph, growth, intervention, hist_data
+    gc.collect()
+    if CUPY_AVAILABLE and cp is not None:
+        try:
+            cp.get_default_memory_pool().free_all_blocks()
+            cp.get_default_pinned_memory_pool().free_all_blocks()
+            free, total = cp.cuda.runtime.memGetInfo()
+            print(
+                f"  GPU memory after cleanup: "
+                f"{free/1024**2:.1f}MB free / {total/1024**2:.1f}MB total"
+            )
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------

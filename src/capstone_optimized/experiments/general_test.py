@@ -99,8 +99,8 @@ def main():
     
     #GRAPH AND GROWTH FEATURES
     initial_nodes = 64
-    num_batches = cp_module.array([256, 256, 256, ], dtype=cp_module.int32) #128
-    batch_sizes = cp_module.array([   8,  256, 8192, ], dtype=cp_module.int32) #65536
+    num_batches = cp_module.array([256, 256, 256, 128], dtype=cp_module.int32) #128
+    batch_sizes = cp_module.array([   8,  256, 8192, 65536], dtype=cp_module.int32) #65536
     barabasi_num_connections = 3
     #create initial nodes with 8 red balls, 8 black ball each
     #initial_node_urns = rng.integers(0, 9, size=(initial_nodes, num_colors))

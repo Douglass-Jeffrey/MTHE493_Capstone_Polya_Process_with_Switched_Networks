@@ -172,3 +172,4 @@ class Graph:
                 cols = self.edges[: self.num_edges, 1]
                 nnz = cp.ones(int(self.num_edges), dtype=cp.float32)
                 self.adj_matrix = cp_sparse((nnz, (rows, cols)), shape=(self.num_nodes, self.num_nodes),)
+            self.edges =  self.edges[: self.num_edges] # trim edge buffer to actual size to free memory

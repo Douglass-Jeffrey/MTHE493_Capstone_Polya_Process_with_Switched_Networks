@@ -101,5 +101,10 @@ Dev log: 2026-02-01:
     MUCH easier to implement the intervention step between polya steps, since we wouldnt have to recompile 
     the CSR matrix every time, discuss in meeting with advisor
 
+  Dev log: 2026-04-17:
+   Submitted final paper, including all simulations. Final Results included comparison of injection
+   and node growth intervention. Also included comparison of results running on 1660TI, A100, ryzen 3 cpu
+   Raw sim results available in zipped results file. Also used gephi to create video simulation.
+
 
   

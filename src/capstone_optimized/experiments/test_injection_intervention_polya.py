@@ -143,7 +143,7 @@ mem_decay = cp_module.full((graph.num_nodes, graph.num_colors), mem_decay_loss, 
 polya = Polya_Process(graph, memory_enabled=memory_enabled, memory_decay_time=memory_decay_time, delta=deltas, mem_decay=mem_decay)
 POLYA_STEPS = int(os.environ.get('CAPSTONE_POLYA_STEPS', f'{polya_steps}'))
 
-num_bins = 50
+num_bins = 72
 hist_bins = cp_module.asnumpy(cp_module.linspace(0, 1, num_bins+1))
 hist_data = cp_module.asnumpy(cp_module.zeros((polya_steps, num_bins)))
 for step_i in range(POLYA_STEPS):

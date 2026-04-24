@@ -114,9 +114,9 @@ def gpu_memory(row):
 # Load files
 # ---------------------------------------------------------------------------
 
-CPU_FILE = 'benchmark_results_CPU_BIG_2.csv'
-GPU_FILE = 'benchmark_results_GPU_BIG_3.csv'
-A100_FILE = 'benchmark_results_A100_BIG_csv.csv'
+CPU_FILE = 'benchmark_results_CPU_BIG_FINAL.csv'
+GPU_FILE = 'benchmark_results_GPU_BIG_FINAL.csv'
+A100_FILE = 'benchmark_results_A100_FINAL.csv'
 
 missing = [f for f in [CPU_FILE, GPU_FILE, A100_FILE] if not os.path.exists(f)]
 if missing:
@@ -179,18 +179,18 @@ COLORS  = {'cpu': '#1f77b4', 'gpu': '#ff7f0e', 'a100': '#2ca02c'}
 
 fig, ax = plt.subplots(figsize=(11, 6))
 
-ax.plot(all_nodes, cpu_times,  label='CPU',  marker=MARKERS['cpu'],
+ax.plot(all_nodes, cpu_times,  label='Ryzen 3 3100 CPU',  marker=MARKERS['cpu'],
         color=COLORS['cpu'],  linewidth=1.8)
-ax.plot(all_nodes, gpu_times,  label='Local GPU',  marker=MARKERS['gpu'],
+ax.plot(all_nodes, gpu_times,  label='GTX 1660 TI GPU',  marker=MARKERS['gpu'],
         color=COLORS['gpu'],  linewidth=1.8)
-ax.plot(all_nodes, a100_times, label='A100', marker=MARKERS['a100'],
+ax.plot(all_nodes, a100_times, label='A100 GPU', marker=MARKERS['a100'],
         color=COLORS['a100'], linewidth=1.8)
 
 apply_log2_xaxis(ax, all_nodes)
 ax.set_yscale('log')
 ax.set_xlabel('Number of Nodes (log₂ scale)', fontsize=12)
-ax.set_ylabel('Total Time (s, log scale)',    fontsize=12)
-ax.set_title('Compute Time: CPU vs Local GPU vs A100', fontsize=14)
+ax.set_ylabel('Total Time (seconds, log scale)',    fontsize=12)
+ax.set_title('Compute Time: Local CPU vs GPU vs A100', fontsize=14)
 ax.legend(fontsize=11)
 ax.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 
@@ -206,17 +206,17 @@ print("Saved time_comparison.png")
 
 fig, ax = plt.subplots(figsize=(11, 6))
 
-ax.plot(all_nodes, cpu_mems,  label='CPU (RAM delta)',        marker=MARKERS['cpu'],
+ax.plot(all_nodes, cpu_mems,  label='Ryzen 3 3100 CPU (RAM delta)',        marker=MARKERS['cpu'],
         color=COLORS['cpu'],  linewidth=1.8)
-ax.plot(all_nodes, gpu_mems,  label='Local GPU (VRAM pool delta)', marker=MARKERS['gpu'],
+ax.plot(all_nodes, gpu_mems,  label='GTX 1660 TI GPU (VRAM + RAM pool delta)', marker=MARKERS['gpu'],
         color=COLORS['gpu'],  linewidth=1.8)
-ax.plot(all_nodes, a100_mems, label='A100 (VRAM pool delta)', marker=MARKERS['a100'],
+ax.plot(all_nodes, a100_mems, label='A100 GPU (VRAM + RAM pool delta)', marker=MARKERS['a100'],
         color=COLORS['a100'], linewidth=1.8)
 
 apply_log2_xaxis(ax, all_nodes)
 ax.set_xlabel('Number of Nodes (log₂ scale)', fontsize=12)
 ax.set_ylabel('Peak Memory Used (MB)',         fontsize=12)
-ax.set_title('Peak Memory: CPU vs Local GPU vs A100', fontsize=14)
+ax.set_title('Peak Memory: Local CPU vs GPU vs A100', fontsize=14)
 ax.legend(fontsize=11)
 ax.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
 

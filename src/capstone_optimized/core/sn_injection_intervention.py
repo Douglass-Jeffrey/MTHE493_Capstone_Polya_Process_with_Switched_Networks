@@ -83,6 +83,6 @@ class Switch_Network_Injection_Intervention:
         # add num injections to num interventions so that we inject on subsequent highest nodes on future injections
         if (self.once_per_node_iv):
             self.current_num_interventions += num_injections
-        #print(f" injected intervention urn: {intervener_urn} into nodes: {dst}")
+        print(f" injected intervention urn: {intervener_urn} into nodes: {dst}")
         
 

@@ -20,14 +20,23 @@ hist_norm = hist_data / row_sums
 vmin_val = np.percentile(hist_norm, 1)
 vmax_val = np.percentile(hist_norm, 99)
 
+import os
+
+# Create output filename automatically
+output_file = os.path.splitext(csv_file)[0] + "_heatmap.png"
+
 plt.figure(figsize=(12, 6))
 
-# We transpose so Time is on the X-axis and Probability is on the Y-axis
-# origin='lower' ensures 0.0 probability is at the bottom
 plt.imshow(hist_norm.T, aspect='auto', origin='lower', 
-            extent=[0, hist_norm.shape[0], 0, 1], cmap='magma', vmin=vmin_val, vmax=vmax_val)
-plt.colorbar(label='Proportion of Nodes')
-plt.title("Evolution of Red Probability Distribution")
+            extent=[0, hist_norm.shape[0], 0, 1],
+            cmap='magma', vmin=vmin_val, vmax=vmax_val)
+
+plt.colorbar(label='Proportion of Nodes in Network')
+plt.title("Heatmap of Red Ball Proportions over Polya Process")
 plt.xlabel("Polya Process Steps")
-plt.ylabel("Probability of Red (P_i)")
-plt.show()
+plt.ylabel("Per Urn Red Ball Proportion")
+#plt.show()
+plt.savefig(output_file, dpi=300, bbox_inches='tight')
+plt.close()
+
+print(f"Saved: {output_file}")

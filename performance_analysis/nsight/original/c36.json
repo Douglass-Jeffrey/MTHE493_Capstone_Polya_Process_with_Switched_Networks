@@ -1,0 +1,46 @@
+{
+ "args": {
+  "batches": 64,
+  "sizes": "8,128,2048,32768,524288",
+  "steps": 3,
+  "fix": "none",
+  "probe": false,
+  "out": "C:\\Users\\dougl\\AppData\\Local\\Temp\\claude\\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\\scratchpad\\prof\\admin\\c36.json"
+ },
+ "snapshots": {
+  "start": {
+   "gpu_free_mb": 5110.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 0.0,
+   "pool_total_mb": 0.0
+  },
+  "after_growth": {
+   "gpu_free_mb": 0.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 3406.17236328125,
+   "pool_total_mb": 10112.70947265625
+  },
+  "after_csr": {
+   "gpu_free_mb": 0.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 5181.1357421875,
+   "pool_total_mb": 10112.70947265625
+  },
+  "after_polya": {
+   "gpu_free_mb": 0.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 5454.20263671875,
+   "pool_total_mb": 11751.138671875
+  }
+ },
+ "probe": {},
+ "steps": [
+  2.21620774269104,
+  1.7285292148590088,
+  1.4562938213348389
+ ],
+ "nodes": 35791424,
+ "edges": 214752192,
+ "growth_s": 9.556619882583618,
+ "csr_s": 13.461868047714233
+}

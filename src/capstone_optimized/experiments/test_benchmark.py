@@ -262,6 +262,9 @@ def run_benchmark(initial_nodes, num_batches_array, batch_sizes_array,
             polya.step()
             print(f'Polya step {step_i+1}/{polya_steps_value} completed. '
                   f'Current edges: {graph.num_edges}')
+        # GPU kernels run asynchronously, wait for the queued steps to finish before stopping the clock
+        if CUPY_AVAILABLE and cp_module is not None:
+            cp_module.cuda.Device().synchronize()
         t_polya_end = time.time()
         polya_time = t_polya_end - t_polya_start
     except Exception as e:

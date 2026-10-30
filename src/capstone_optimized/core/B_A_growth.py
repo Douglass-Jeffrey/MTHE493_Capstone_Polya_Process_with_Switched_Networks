@@ -181,5 +181,10 @@ class Barabasi_Albert_Growth:
         #print ("stubs after growth:\n", self.stubs[:self.num_stubs])
 
     def finalize_growth(self):
-        self.graph.build_csr()
+        # Growth is over: the stub list and the graph's edge buffer are not needed after the CSR is built.
+        # Freed here so the Polya step's arrays fit in VRAM (at 71.6M nodes they are 1.6 GB and 3.9 GB)
+        self.stubs = None
+        self.stubs_capacity = 0
+        self.num_stubs = 0
+        self.graph.build_csr(release_edges=True)
         #print("stubs final size:", self.num_stubs)

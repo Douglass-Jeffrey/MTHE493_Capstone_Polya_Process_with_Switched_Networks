@@ -1,4 +1,6 @@
+import numpy as np
 from ..cupy_fallback import cp, CUPY_AVAILABLE
+from . import csr_kernels
 if CUPY_AVAILABLE:
     from cupyx.scipy.sparse import csr_matrix as cp_sparse
     from scipy.sparse import csr_matrix as sp_sparse
@@ -33,8 +35,39 @@ class Graph:
         if node_urns is None: self.node_urns = cp.ones((num_nodes, num_colors), dtype=cp.int32)
         else: self.node_urns = node_urns
 
-        # most efficient storage possible for edges using CSR adjacency matrix, 
+        # most efficient storage possible for edges using CSR adjacency matrix,
+        # on the GPU an all-ones CSR is kept as just indptr + indices (see build_csr / csr_kernels.py)
+        self.csr_indptr = None
+        self.csr_indices = None
+        # where build_csr puts the CSR indices: 'auto' (VRAM if it fits), 'device', or 'host' (pinned RAM,
+        # read by the GPU over PCIe, as fast here because the step is limited by the random urn reads)
+        self.csr_placement = 'auto'
         self.adj_matrix = None
+
+    @property
+    def adj_matrix(self):
+        # Built on first use from indptr/indices for code that wants a sparse matrix object; the Polya
+        # step does not need it, and the all-ones values array would cost as much memory as the indices
+        if self._adj_matrix is None and self.csr_indices is not None:
+            indices = self.csr_indices if isinstance(self.csr_indices, cp.ndarray) else cp.asarray(self.csr_indices)
+            ones = cp.ones(indices.size, dtype=cp.float32)
+            self._adj_matrix = cp_sparse((ones, indices, self.csr_indptr), shape=(self.num_nodes, self.num_nodes))
+        return self._adj_matrix
+
+    @adj_matrix.setter
+    def adj_matrix(self, matrix):
+        # a matrix assigned directly is used as-is (original SpMM path)
+        self._adj_matrix = matrix
+        self.csr_indptr = None
+        self.csr_indices = None
+
+    def release_edge_buffer(self):
+        # The edge buffer is only needed to (re)build the CSR. Once growth is finished it is the largest
+        # array on the GPU, and if it stays allocated the Polya step's arrays get pushed into shared memory
+        self.edges = None
+        self.edge_capacity = 0
+        if CUPY_AVAILABLE:
+            cp.get_default_memory_pool().free_all_blocks()
 
     # add a single edge 
     def add_edge(self, i, j):
@@ -46,7 +79,9 @@ class Graph:
     Avoids expensive Python loops and makes use of GPU matmul.
     """
     def add_edges(self, i_arr, j_arr):
-    
+        if self.edges is None:
+            raise RuntimeError('edge buffer was released after the CSR was built (finalize_growth), cannot add edges')
+
         # convert to cp arrays if necessary
         # check if array is numpy/cupy array, if not convert it to one
         if not hasattr(i_arr, 'dtype'): i_arr = cp.array(i_arr, dtype=cp.int32)
@@ -136,19 +171,24 @@ class Graph:
             raise ValueError(f'urns shape must be ({self.num_nodes}, {self.num_colors}), got {urns.shape}')
         self.node_urns = urns
 
-    #djeffrey TODO set up cuda streams for this since its slow as balls
     def get_mega_urns(self, include_self=True):
+        # custom gather kernel: same values as the SpMM below (float64), without its float64 copies of A and U
+        if (self.csr_indices is not None and self.num_colors <= csr_kernels.MAX_COLORS
+                and csr_kernels.urns_supported(self.node_urns)):
+            return csr_kernels.mega_urns(self.csr_indptr, self.csr_indices, self.node_urns, include_self)
+
         # If no edges, each mega urn is just the node's own urn
         if self.adj_matrix is None:
             return self.node_urns.copy()
-        
+
         mega_urns = self.adj_matrix @ self.node_urns # nxn * nxc = nxc
         if include_self:
             # Add own urn (vectorized, element-wise)
             mega_urns += self.node_urns
         return mega_urns
     
-    def build_csr(self):
+    def build_csr(self, release_edges=False):
+        # release_edges: free the edge buffer once it has been read (end of growth, see finalize_growth)
         if self.num_edges == 0:
             self.adj_matrix = None
         else:
@@ -157,18 +197,59 @@ class Graph:
                 print(f"Building CSR on CPU then moving to GPU")
                 rows = cp.asnumpy(self.edges[: self.num_edges, 0])
                 cols = cp.asnumpy(self.edges[: self.num_edges, 1])
-                nnz = cp.asnumpy(cp.ones(int(self.num_edges), dtype=cp.float32))
+                if release_edges:
+                    self.release_edge_buffer()
+                nnz = np.ones(int(self.num_edges), dtype=np.float32)
                 cpu_csr = sp_sparse((nnz, (rows, cols)), shape=(self.num_nodes, self.num_nodes),)
+                del rows, cols, nnz
 
-                # then move back to shared memory and vram
-                gpu_data = cp.array(cpu_csr.data)
-                gpu_indices = cp.array(cpu_csr.indices)
-                gpu_indptr = cp.array(cpu_csr.indptr)
-                self.adj_matrix = cp_sparse((gpu_data, gpu_indices, gpu_indptr), shape=cpu_csr.shape)
+                # then move back to vram (or pinned RAM if the indices do not fit, see _store_csr)
+                if not self._store_csr(cpu_csr.indptr, cpu_csr.indices, cpu_csr.data):
+                    gpu_data = cp.array(cpu_csr.data)
+                    gpu_indices = cp.array(cpu_csr.indices)
+                    gpu_indptr = cp.array(cpu_csr.indptr)
+                    self.adj_matrix = cp_sparse((gpu_data, gpu_indices, gpu_indptr), shape=cpu_csr.shape)
 
             else: #standard build procedure, if cp not available uses np
                 print(f"Building CSR on {'GPU' if self.use_gpu else 'CPU'}")
                 rows = self.edges[: self.num_edges, 0]
                 cols = self.edges[: self.num_edges, 1]
                 nnz = cp.ones(int(self.num_edges), dtype=cp.float32)
-                self.adj_matrix = cp_sparse((nnz, (rows, cols)), shape=(self.num_nodes, self.num_nodes),)
+                adj = cp_sparse((nnz, (rows, cols)), shape=(self.num_nodes, self.num_nodes),)
+                del rows, cols, nnz
+                if release_edges:
+                    self.release_edge_buffer()
+                if not self._store_csr(adj.indptr, adj.indices, adj.data):
+                    self.adj_matrix = adj
+
+    def _store_csr(self, indptr, indices, data):
+        """
+        Keep only indptr/indices of an all-ones CSR for the custom step kernels (csr_kernels.py).
+        Returns False, storing nothing, if the matrix has other weights (duplicate edges summed by the
+        CSR build) or needs 64-bit indices; the original sparse matrix path is used then.
+        """
+        if not self.use_gpu or indptr.dtype != np.int32 or indices.dtype != np.int32:
+            return False
+        if data.size and not (data.min() == 1 and data.max() == 1):
+            return False
+        self.adj_matrix = None
+        self.csr_indptr = cp.asarray(indptr)
+        if self._csr_indices_on_host(indices.size):
+            print(f"CSR indices do not fit in VRAM, keeping them in pinned host memory")
+            pinned = cp.cuda.alloc_pinned_memory(max(indices.nbytes, 1))
+            host = np.frombuffer(pinned, dtype=np.int32, count=indices.size)
+            host[:] = indices if isinstance(indices, np.ndarray) else cp.asnumpy(indices)
+            self.csr_indices = host
+        else:
+            self.csr_indices = cp.asarray(indices)
+        return True
+
+    def _csr_indices_on_host(self, nnz):
+        if self.csr_placement != 'auto':
+            return self.csr_placement == 'host'
+        # VRAM the Polya step needs on top of what is allocated now: the indices, plus per node the
+        # float64 random values, int32 draws and an int32 delta row
+        need = 4 * nnz + self.num_nodes * (8 + 4 + 4 * self.num_colors)
+        cp.get_default_memory_pool().free_all_blocks()
+        free, _ = cp.cuda.runtime.memGetInfo()
+        return need > 0.9 * free - 256 * 2**20

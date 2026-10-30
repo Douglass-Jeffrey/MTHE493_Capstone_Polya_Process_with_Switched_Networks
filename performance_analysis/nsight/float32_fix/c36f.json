@@ -1,0 +1,53 @@
+{
+ "args": {
+  "batches": 64,
+  "sizes": "8,128,2048,32768,524288",
+  "steps": 4,
+  "fix": "both",
+  "probe": false,
+  "out": "C:\\Users\\dougl\\AppData\\Local\\Temp\\claude\\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\\scratchpad\\prof\\admin\\c36f.json"
+ },
+ "snapshots": {
+  "start": {
+   "gpu_free_mb": 5110.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 0.0,
+   "pool_total_mb": 0.0
+  },
+  "after_growth": {
+   "gpu_free_mb": 0.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 3406.17236328125,
+   "pool_total_mb": 10112.70947265625
+  },
+  "after_csr": {
+   "gpu_free_mb": 0.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 5181.1357421875,
+   "pool_total_mb": 10112.70947265625
+  },
+  "after_free": {
+   "gpu_free_mb": 2680.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 2048.03076171875,
+   "pool_total_mb": 2423.4501953125
+  },
+  "after_polya": {
+   "gpu_free_mb": 752.0,
+   "gpu_total_mb": 6143.5625,
+   "pool_used_mb": 2321.09765625,
+   "pool_total_mb": 4334.9189453125
+  }
+ },
+ "probe": {},
+ "steps": [
+  0.9472668170928955,
+  1.237905502319336,
+  1.4415283203125,
+  0.35308218002319336
+ ],
+ "nodes": 35791424,
+ "edges": 214752192,
+ "growth_s": 9.598143100738525,
+ "csr_s": 13.827895402908325
+}

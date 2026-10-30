@@ -1,5 +1,6 @@
 from ..cupy_fallback import cp
 from .graph_x import Graph
+from . import csr_kernels
 
 class Polya_Process:
     """
@@ -26,6 +27,42 @@ class Polya_Process:
 
 
     def step(self):
+        draws = self._fused_draws()  # GPU fast path, None when it does not apply
+        if draws is None:
+            draws = self._draws()
+
+        # Vectorized urn update
+        if csr_kernels.urns_supported(self.graph.node_urns) and self._delta_supported():
+            # node_urns[i, draws[i]] += delta[i, draws[i]] in one kernel, no index arrays
+            csr_kernels.apply_draws(draws, self.delta, self.graph.node_urns)
+        else:
+            rows = cp.arange(self.graph.num_nodes)
+            #print(f"BEFORE: {self.graph.node_urns[1]}") #debug
+            #print(f"DRAWS: {draws[1]}") #debug
+            #print(f"ADDING: {self.delta[1, draws]} to node 1") #debug
+            self.graph.node_urns[rows, draws] += self.delta[rows, draws]
+            #print(f"AFTER: {self.graph.node_urns[1]}") #debug
+
+        if self.memory_enabled:
+            self.memory_step(draws)
+        self.step_count += 1
+
+    def _fused_draws(self):
+        """
+        Two colours on a graph holding an unweighted CSR (Graph.build_csr): gather the mega urns and draw in
+        one kernel (csr_kernels.py). Same random numbers and float64 arithmetic as _draws, so same draws.
+        """
+        g = self.graph
+        if (g.num_colors != 2 or getattr(g, 'csr_indices', None) is None
+                or type(g).get_mega_urns is not Graph.get_mega_urns or not csr_kernels.urns_supported(g.node_urns)):
+            return None
+        rand_vals = cp.random.rand(g.num_nodes)
+        return csr_kernels.draw_two_colour(g.csr_indptr, g.csr_indices, g.node_urns, rand_vals)
+
+    def _delta_supported(self):
+        return isinstance(self.delta, cp.ndarray) and self.delta.shape == self.graph.node_urns.shape
+
+    def _draws(self):
         mega = self.graph.get_mega_urns()  # num_nodes x num_colors)
         # Compute sums of balls in each mega urn
         row_sums = cp.sum(mega, axis=1, keepdims=True)
@@ -50,19 +87,8 @@ class Polya_Process:
             # equal to `num_colors` (2 in our case, still OOB). Clip to valid range.
             # ie if both probs hit, just take the last color (1 in 2-colour case)
             draws = cp.minimum(draws, self.graph.num_colors - 1)
+        return draws
 
-        # Vectorized urn update 
-        rows = cp.arange(self.graph.num_nodes)
-        #print(f"BEFORE: {self.graph.node_urns[1]}") #debug
-        #print(f"DRAWS: {draws[1]}") #debug
-        #print(f"ADDING: {self.delta[1, draws]} to node 1") #debug
-        self.graph.node_urns[rows, draws] += self.delta[rows, draws]
-        #print(f"AFTER: {self.graph.node_urns[1]}") #debug
-
-        if self.memory_enabled:
-            self.memory_step(draws)
-        self.step_count += 1
-        
     def memory_step(self, draws):
         if ((self.step_count == self.memory_decay_time) and self.remove_initial_urns != False):
             # when we hit memory decay time, delete all initial urns from memory 

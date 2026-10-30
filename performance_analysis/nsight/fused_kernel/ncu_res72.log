@@ -1,0 +1,9 @@
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 79156 (C:\Users\dougl\AppData\Local\Programs\Python\Python312\python.exe)
+n71582784 resident: n=71,582,784 nnz=429,500,352 pool used 3.15 GB, device free 2.20 GB
+==PROF== Profiling "draw2": 0%.
+==WARNING== Backing up device memory in system memory. Kernel replay might be slow. Consider using "--replay-mode application" to avoid memory save-and-restore.
+...50%....100% - 3 passes
+  lanes= 4: median   4127.7 ms/step  (min 4127.7, max 4127.7)
+==PROF== Disconnected from process 79156
+==PROF== Report: C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\opt\rep\ncu_res72.ncu-rep

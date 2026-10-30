@@ -1,0 +1,44 @@
+﻿==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 17188 (C:\Users\dougl\AppData\Local\Programs\Python\Python312\python.exe)
+using CuPy (devices=1)
+[start] free=5110 MB  pool used=0 MB  pool held=0 MB
+Resizing Stubs: 1000000 -> 1500000
+Resizing Stubs: 1500000 -> 2250000
+Resizing Stubs: 2250000 -> 3375000
+Resizing Stubs: 3375000 -> 5062500
+Resizing Stubs: 5062500 -> 7593750
+Resizing Stubs: 7593750 -> 11390625
+Resizing Stubs: 11390625 -> 17085937
+Resizing Stubs: 17085937 -> 25628905
+Resizing Stubs: 25628905 -> 38443357
+Resizing Stubs: 38443357 -> 57665035
+Resizing Stubs: 57665035 -> 86497552
+Resizing Stubs: 86497552 -> 129746328
+Resizing Stubs: 129746328 -> 194619492
+Resizing Stubs: 194619492 -> 291929238
+Resizing Stubs: 291929238 -> 437893857
+[after_growth] free=0 MB  pool used=6161 MB  pool held=19756 MB
+ncu.bat : C:\Users\dougl\OneDrive\Documents\dev_projects\MTHE493_Capstone_Polya_Process_with_Switched_Networks\.venv\Li
+b\site-packages\cupy\_creation\from_data.py:53: PerformanceWarning: Using synchronous transfer as pinned memory 
+(1718001408 bytes) could not be allocated. This generally occurs because of insufficient host memory. The original 
+error was: cudaErrorMemoryAllocation: out of memory
+At C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Proce
+ss-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\prof\admin_suite.ps1:43 char:5
++     & $ncu --target-processes all --clock-control none --kernel-name  ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\dougl\...: out of memory:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  return _core.array(obj, dtype, copy, order, subok, ndmin, blocking)
+Building CSR on CPU then moving to GPU
+[after_csr] free=0 MB  pool used=9711 MB  pool held=19756 MB
+nodes=71,582,784 edges=429,500,352 growth=30.8s csr=34.1s
+[after_free] free=0 MB  pool used=4096 MB  pool held=6680 MB
+step 0: 7.667s  free=0 MB  pool used=4642 MB held=8865 MB
+step 1: 2.195s  free=0 MB  pool used=4642 MB held=8865 MB
+==PROF== Profiling "csrmm_alg1_kernel": 0%....50%....100% - 1 pass
+step 2: 2.782s  free=0 MB  pool used=4642 MB held=8865 MB
+step 3: 1.488s  free=0 MB  pool used=4642 MB held=8865 MB
+[after_polya] free=0 MB  pool used=4642 MB  pool held=8865 MB
+==PROF== Disconnected from process 17188
+==PROF== Report: C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\prof\admin\c72f.ncu-rep

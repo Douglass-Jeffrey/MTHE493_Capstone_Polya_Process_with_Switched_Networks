@@ -1,4 +1,4 @@
-from ..cupy_fallback import cp
+from ..cupy_fallback import cp, CUPY_AVAILABLE
 from .graph_x import Graph
 
 class Barabasi_Albert_Growth:
@@ -25,39 +25,52 @@ class Barabasi_Albert_Growth:
         # we can then sample uniformly from this list to make new
         # connections according to preferential attachment. (Molloy-Reed Trick)
         
-        # we are also implementing auto growing of the stubs array as needed
-        # given that we are trying to represent 10**8 or more nodes
-        initial_capacity = max(1_000_000, self.graph.num_nodes)
-        self.stubs_capacity = initial_capacity
-        self.stubs = cp.zeros(self.stubs_capacity, dtype=cp.int32)
+        # The stub list is not stored. Each batch appends [src, dst] to the stubs and the rows (src, dst) then
+        # (dst, src) to the graph's edge buffer, so after the initial part stub r is edges[r - shift, 0]. Only
+        # the initial part (clique or pre-existing edges, laid out differently) is kept as an array, _stubs_head.
+        # This saves a buffer as large as the edge list's first column (1.7 GB at 71.6M nodes, plus slack)
+        self.stubs = None
         self.num_stubs = 0
+        self._stubs_head = None
+        self._stub_shift = 0
 
         if self.graph.num_edges > 0:
-            active_edges = self.graph.edges[:self.graph.num_edges]
-            flat_edges = active_edges.flatten().astype(cp.int32)
-            count = flat_edges.size
-
             # Unlikely i will want to do BA growth on a pre-existing graph, but just in case
-            # if number of edges flattened exceeds capacity, grow stubs array accordingly
-            if count > self.stubs_capacity:
-                self.stubs_capacity = count
-                self.stubs = cp.zeros(self.stubs_capacity, dtype=cp.int32)
+            active_edges = self.graph.edges[:self.graph.num_edges]
+            self._stubs_head = active_edges.flatten().astype(cp.int32)
+            self.num_stubs = self._stubs_head.size
+            self._stub_shift = self.num_stubs - self.graph.num_edges
 
-            # then update stubs accordingly
-            self.stubs[:count] = flat_edges
-            self.num_stubs = count
+    def reserve(self, final_num_nodes):
+        """
+        Size the graph's edge buffer for a network grown to final_num_nodes, so it is never resized. A resize
+        holds the old and the new buffer at once, at 71.6M nodes 3.4 GB and 4.3 GB, more than the GPU has.
+        Only done if the buffer and the urns fit in free VRAM: a buffer the driver has to keep in system RAM
+        from the start makes every batch read and write it over PCIe. Returns whether it reserved.
+        """
+        init = max(self.m, self.initial_nodes) if self.graph.num_edges == 0 else 0
+        rows = self.graph.num_edges + init * (init - 1) + 2 * self.m * max(0, final_num_nodes - max(init, self.graph.num_nodes))
+        if rows <= self.graph.edge_capacity:
+            return True
+        if CUPY_AVAILABLE:
+            # the urns are replaced (copied) every batch by the callbacks' vstack, so count them twice
+            need = (rows - self.graph.edge_capacity) * 8 + 2 * final_num_nodes * self.graph.num_colors * 4
+            cp.get_default_memory_pool().free_all_blocks()
+            if need > cp.cuda.runtime.memGetInfo()[0] - 256 * 2**20:
+                return False
+        new_edges = cp.empty((rows, 2), dtype=self.graph.edges.dtype)
+        new_edges[:self.graph.num_edges] = self.graph.edges[:self.graph.num_edges]
+        self.graph.edges = new_edges
+        self.graph.edge_capacity = rows
+        return True
 
-    def _ensure_stubs_capacity(self, needed_extra):
-        """Checks if stubs array needs resizing and handles it efficiently."""
-        needed_total = self.num_stubs + needed_extra
-        if needed_total > self.stubs_capacity:
-            new_cap = max(needed_total, int(self.stubs_capacity * 1.5))
-            print(f"Resizing Stubs: {self.stubs_capacity} -> {new_cap}")
-            
-            new_stubs = cp.empty(new_cap, dtype=self.stubs.dtype)
-            new_stubs[:self.num_stubs] = self.stubs[:self.num_stubs]
-            self.stubs = new_stubs
-            self.stubs_capacity = new_cap
+    def _stub_values(self, idx):
+        """stubs[idx] for int64 stub indices, read from the head array or the edge buffer."""
+        head = self._stubs_head
+        tail = self.graph.edges[cp.maximum(idx - self._stub_shift, 0), 0]
+        if head is None:
+            return tail
+        return cp.where(idx < head.size, head[cp.minimum(idx, head.size - 1)], tail)
 
     def _initialize_clique(self, m_init):
         # generate some initial clique of nodes at beginning of growth
@@ -74,15 +87,10 @@ class Barabasi_Albert_Growth:
         # as implemented above)
         self.graph.add_edges(src, dst)
 
-        # Add to local stubs buffer, check if we need to resize (wont unless our initial clique is 1M+)
-        new_stubs_count = src.size + dst.size
-        self._ensure_stubs_capacity(new_stubs_count)
-        
-        end_idx = self.num_stubs + new_stubs_count
-        # Fill stubs with new connections(append src and dst)
-        self.stubs[self.num_stubs : self.num_stubs + src.size] = src
-        self.stubs[self.num_stubs + src.size : end_idx] = dst
-        self.num_stubs = end_idx
+        # stubs: src then dst (each clique edge counted from both ends, as in the stored stub list before)
+        self._stubs_head = cp.concatenate([src, dst])
+        self.num_stubs = self._stubs_head.size
+        self._stub_shift = self.num_stubs - self.graph.num_edges
         
         # update node count if needed
         if self.graph.num_nodes < m_init:
@@ -124,7 +132,7 @@ class Barabasi_Albert_Growth:
         # Sampling using stubs for preferential attachment
         # Important: We sample from stubs[:self.num_stubs], effectively ignoring the empty buffer space
         rand_indices = cp.random.randint(0, self.num_stubs, size=(batch_size, self.m), dtype=cp.int64)
-        targets = self.stubs[rand_indices]
+        targets = self._stub_values(rand_indices)
 
         # Check if a new node has selected the same target more than once
         sorted_targets = cp.sort(targets, axis=1)
@@ -137,7 +145,7 @@ class Barabasi_Albert_Growth:
             bad_indices = cp.where(has_dupes)[0]
             num_bad = bad_indices.size
             new_rands = cp.random.randint(0, self.num_stubs, size=(num_bad, self.m), dtype=cp.int64)
-            targets[bad_indices] = self.stubs[new_rands]
+            targets[bad_indices] = self._stub_values(new_rands)
             
             sorted_targets = cp.sort(targets, axis=1)
             duplicates = (cp.diff(sorted_targets, axis=1) == 0)
@@ -171,20 +179,24 @@ class Barabasi_Albert_Growth:
         # Optimization: We only need to add `src` and `dst` arrays to stubs ONCE 
         # to represent the 1 new degree for each node.
         
-        needed_space = src.size + dst.size
-        self._ensure_stubs_capacity(needed_space)
-        
-        current_ptr = self.num_stubs
-        self.stubs[current_ptr : current_ptr + src.size] = src
-        self.stubs[current_ptr + src.size : current_ptr + src.size + dst.size] = dst
-        self.num_stubs += needed_space
+        # the new stubs are the rows just appended to the edge buffer (see __init__)
+        self.num_stubs += src.size + dst.size
+
+        # CuPy caches every buffer this growth has outgrown (the urn arrays replaced by the callback's vstack,
+        # old edge buffers), and none of them fits a later, larger request. Left alone the cache
+        # reaches ~14 GB at 71.6M nodes and the driver moves live arrays out to system RAM to make room
+        # Freeing is only done once VRAM runs low: each cudaFree takes ~20 ms under the Windows display driver
+        if CUPY_AVAILABLE:
+            pool = cp.get_default_memory_pool()
+            cached = pool.total_bytes() - pool.used_bytes()
+            if cached > 256 * 2**20 and cp.cuda.runtime.memGetInfo()[0] < cached + 512 * 2**20:
+                pool.free_all_blocks()
         #print ("stubs after growth:\n", self.stubs[:self.num_stubs])
 
     def finalize_growth(self):
         # Growth is over: the stub list and the graph's edge buffer are not needed after the CSR is built.
         # Freed here so the Polya step's arrays fit in VRAM (at 71.6M nodes they are 1.6 GB and 3.9 GB)
-        self.stubs = None
-        self.stubs_capacity = 0
+        self._stubs_head = None
         self.num_stubs = 0
         self.graph.build_csr(release_edges=True)
         #print("stubs final size:", self.num_stubs)

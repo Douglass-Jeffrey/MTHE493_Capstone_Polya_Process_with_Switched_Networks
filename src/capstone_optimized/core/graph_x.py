@@ -192,23 +192,28 @@ class Graph:
         if self.num_edges == 0:
             self.adj_matrix = None
         else:
-            # if gpu available and we have 10M + edges build csr on cpu instead, much faster than on gpu because of memory availability.
+            # large graphs: counting sort on the GPU (csr_kernels.csr_from_edges), same arrays as scipy's build.
+            # cupyx's own coo -> csr needs several copies of the edge list in VRAM, which do not fit
             if self.num_edges > 10**6 and self.use_gpu:
-                print(f"Building CSR on CPU then moving to GPU")
-                rows = cp.asnumpy(self.edges[: self.num_edges, 0])
-                cols = cp.asnumpy(self.edges[: self.num_edges, 1])
+                print(f"Building CSR on GPU")
+                # stage the edge list in pinned host memory so the GPU buffer, 8 bytes per entry and the largest
+                # array at the end of growth, can be freed first. The build kernels read it in order over PCIe
+                m = int(self.num_edges)
+                pinned = cp.cuda.alloc_pinned_memory(8 * m)
+                edges_h = np.frombuffer(pinned, dtype=np.int32, count=2 * m).reshape(m, 2)
+                self.edges[:m].get(out=edges_h)
                 if release_edges:
                     self.release_edge_buffer()
-                nnz = np.ones(int(self.num_edges), dtype=np.float32)
-                cpu_csr = sp_sparse((nnz, (rows, cols)), shape=(self.num_nodes, self.num_nodes),)
-                del rows, cols, nnz
-
-                # then move back to vram (or pinned RAM if the indices do not fit, see _store_csr)
-                if not self._store_csr(cpu_csr.indptr, cpu_csr.indices, cpu_csr.data):
-                    gpu_data = cp.array(cpu_csr.data)
-                    gpu_indices = cp.array(cpu_csr.indices)
-                    gpu_indptr = cp.array(cpu_csr.indptr)
-                    self.adj_matrix = cp_sparse((gpu_data, gpu_indices, gpu_indptr), shape=cpu_csr.shape)
+                built = (csr_kernels.csr_from_edges(edges_h, self.num_nodes, self._csr_indices_on_host)
+                         if m < 2**31 else None)
+                if built is not None:
+                    self.adj_matrix = None
+                    self.csr_indptr, self.csr_indices = built
+                else:   # duplicate edges sum to weights > 1 (or too many entries for int32): scipy + SpMM path
+                    self._build_csr_scipy(edges_h[:, 0], edges_h[:, 1])
+                del edges_h, pinned
+                cp.get_default_pinned_memory_pool().free_all_blocks()
+                cp.get_default_memory_pool().free_all_blocks()     # the row sort's key buffers
 
             else: #standard build procedure, if cp not available uses np
                 print(f"Building CSR on {'GPU' if self.use_gpu else 'CPU'}")
@@ -221,6 +226,43 @@ class Graph:
                     self.release_edge_buffer()
                 if not self._store_csr(adj.indptr, adj.indices, adj.data):
                     self.adj_matrix = adj
+
+    def renumber(self, order):
+        """
+        Rename node order[r] to r, so that neighbouring nodes sit near each other in memory (bfs_order).
+        Permutes the CSR and the urns, and node_order maps the new ids back to the original ones. Per-node
+        arrays held elsewhere (the Polya process's delta and memory) must be permuted the same way.
+        """
+        new_indptr, out = csr_kernels.relabel(self.csr_indptr, self.csr_indices, order)
+        on_device = isinstance(self.csr_indices, cp.ndarray)
+        self.csr_indices = None
+        cp.get_default_memory_pool().free_all_blocks()
+        indices = cp.asarray(out) if on_device else out
+        del out
+        cp.get_default_pinned_memory_pool().free_all_blocks()
+        csr_kernels.sort_rows(new_indptr, indices, self.num_nodes)
+        self._adj_matrix = None
+        self.csr_indptr, self.csr_indices = new_indptr, indices
+        self.node_urns = self.node_urns[order]
+        prev = getattr(self, "node_order", None)
+        self.node_order = order if prev is None else prev[order]
+
+    def bfs_order(self, source=None):
+        """Breadth-first node order from `source` (default: the highest-degree node), as scipy computes it."""
+        if source is None:
+            source = int(cp.argmax(cp.diff(self.csr_indptr)))
+        return csr_kernels.bfs_order(self.csr_indptr, self.csr_indices, self.num_nodes, source)
+
+    def _build_csr_scipy(self, rows, cols):
+        nnz = np.ones(rows.size, dtype=np.float32)
+        cpu_csr = sp_sparse((nnz, (rows, cols)), shape=(self.num_nodes, self.num_nodes),)
+        del nnz
+        # then move back to vram (or pinned RAM if the indices do not fit, see _store_csr)
+        if not self._store_csr(cpu_csr.indptr, cpu_csr.indices, cpu_csr.data):
+            gpu_data = cp.array(cpu_csr.data)
+            gpu_indices = cp.array(cpu_csr.indices)
+            gpu_indptr = cp.array(cpu_csr.indptr)
+            self.adj_matrix = cp_sparse((gpu_data, gpu_indices, gpu_indptr), shape=cpu_csr.shape)
 
     def _store_csr(self, indptr, indices, data):
         """

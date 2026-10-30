@@ -223,6 +223,8 @@ def run_benchmark(initial_nodes, num_batches_array, batch_sizes_array,
                   use_gpu=True, node_urns=initial_node_urns)
     growth = Barabasi_Albert_Growth(graph, m=barabasi_num_connections,
                                     initial_nodes=initial_nodes)
+    # size the edge buffer for the final network up front (skipped if it would not fit in VRAM)
+    growth.reserve(expected_final_nodes)
 
     # Start peak sampler — it tracks the true high-water mark of RSS
     # for the entirety of this benchmark, not the process lifetime.

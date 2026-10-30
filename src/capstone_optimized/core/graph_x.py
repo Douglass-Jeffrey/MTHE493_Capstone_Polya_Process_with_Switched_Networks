@@ -230,7 +230,7 @@ class Graph:
     def renumber(self, order):
         """
         Rename node order[r] to r, so that neighbouring nodes sit near each other in memory (bfs_order).
-        Permutes the CSR and the urns, and node_order maps the new ids back to the original ones. Per-node
+        Permutes the CSR and the urns, and node_order (a NumPy array) maps the new ids back to the original ones. Per-node
         arrays held elsewhere (the Polya process's delta and memory) must be permuted the same way.
         """
         new_indptr, out = csr_kernels.relabel(self.csr_indptr, self.csr_indices, order)
@@ -244,8 +244,12 @@ class Graph:
         self._adj_matrix = None
         self.csr_indptr, self.csr_indices = new_indptr, indices
         self.node_urns = self.node_urns[order]
+        # kept in host memory: it is only needed to map results back, and on a graph near the size of VRAM
+        # every MB left on the GPU pushes part of the step's arrays into system RAM
+        order_h = cp.asnumpy(order)
         prev = getattr(self, "node_order", None)
-        self.node_order = order if prev is None else prev[order]
+        self.node_order = order_h if prev is None else prev[order_h]
+        cp.get_default_memory_pool().free_all_blocks()
 
     def bfs_order(self, source=None):
         """Breadth-first node order from `source` (default: the highest-degree node), as scipy computes it."""

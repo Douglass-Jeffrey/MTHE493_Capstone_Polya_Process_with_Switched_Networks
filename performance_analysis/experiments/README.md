@@ -47,7 +47,10 @@ growing the network and building the CSR matrix, and 29.6 s on 100 steps. These 
 | 71.6M | 1,565 s | 1,557 s | 90.7 s | 36.9 s | 37.9 s |
 
 At 143.2M nodes, where the CSR indices live in pinned system RAM: CSR build 82 s -> 16 s, growth 63 s -> 51 s
-(`reserve` skips itself here).
+(`reserve` skips itself here). Renumbering takes 17.6 s at that size, because every BFS level reads the 3.4 GB
+of indices over PCIe, and cuts a step from 0.58 s to 0.44 s. It pays off after about 125 steps.
+`node_order` is kept in host memory: on the GPU its 573 MB pushed the step's arrays into system RAM, and a
+step took 0.97 s.
 
 ## Checks
 

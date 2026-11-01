@@ -130,7 +130,7 @@ intervention = Switch_Network_Node_Growth_Intervention(graph, once_per_node_iv =
 
 print("Building CSR adjacency matrix...")
 csr_time_start = time.time()
-growth.finalize_growth()  # build CSR adjacency
+growth.finalize_growth(release_edges=False)  # build CSR adjacency; keep the edges for the mid-run interventions
 print(f'CSR build time: {time.time() - csr_time_start:.3f}s')
 
 # Run Polya process (timed)

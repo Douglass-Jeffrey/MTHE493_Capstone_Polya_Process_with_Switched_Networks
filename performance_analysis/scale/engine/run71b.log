@@ -1,0 +1,33 @@
+[gpulock] C-71b: waiting for A-nsys 72744 02:44:38
+[gpulock] C-71b: acquired after 66 s
+using CuPy (devices=1)
+engine: n=17,895,744 blocks=52 placement=vram (pinned 0, ram 0, stream 0) pinned=0.00 GiB ram=0.00 GiB escapes=2871 load 1.0 s
+(b) vram: md5 28b686c5c2787ed648d973bfb09c10e6 red share 0.4998 step times ['0.088', '0.068', '0.068'] overflow False
+engine: n=17,895,744 blocks=52 placement=pinned (pinned 52, ram 0, stream 0) pinned=0.40 GiB ram=0.00 GiB escapes=2871 load 0.4 s
+(b) pinned: md5 28b686c5c2787ed648d973bfb09c10e6 red share 0.4998 step times ['0.068', '0.068', '0.068'] overflow False
+engine: n=17,895,744 blocks=52 placement=stream (pinned 0, ram 0, stream 52) pinned=0.05 GiB ram=0.00 GiB escapes=2871 load 0.1 s
+(b) stream: md5 28b686c5c2787ed648d973bfb09c10e6 red share 0.4998 step times ['0.257', '0.265', '0.264'] overflow False
+engine: n=17,895,744 blocks=52 placement=mixed (pinned 13, ram 12, stream 27) pinned=0.14 GiB ram=0.09 GiB escapes=2871 load 0.3 s
+(b) mixed: md5 28b686c5c2787ed648d973bfb09c10e6 red share 0.4998 step times ['0.139', '0.142', '0.139'] overflow False
+engine: n=17,895,744 blocks=52 placement=vram (pinned 0, ram 0, stream 0) pinned=0.00 GiB ram=0.00 GiB escapes=2871 load 0.6 s
+(c) vram+cpu (4 blocks on the CPU): md5 28b686c5c2787ed648d973bfb09c10e6 step times ['0.086', '0.068', '0.067'] cpu (apply, draw) [('0.000', '0.079'), ('0.011', '0.050'), ('0.010', '0.051')]
+{"name": "n17895744", "steps": 3, "philox_same_all": true, "philox_md5": {"vram": "28b686c5c2787ed648d973bfb09c10e6", "pinned": "28b686c5c2787ed648d973bfb09c10e6", "stream": "28b686c5c2787ed648d973bfb09c10e6", "mixed": "28b686c5c2787ed648d973bfb09c10e6", "vram+cpu": "28b686c5c2787ed648d973bfb09c10e6"}}
+=== --dir n71582784_split --placement pinned --block-mb 96 --block-rows 8388608 --steps 10 --tag pinned-96MB
+engine: n=71,582,784 blocks=18 placement=pinned (pinned 18, ram 0, stream 0) pinned=1.60 GiB ram=0.00 GiB escapes=12260 load 1.9 s
+{"tag": "pinned-96MB", "dir": "n71582784_split", "n": 71582784, "placement": "pinned", "block_rows": 8388608, "block_mb": 96.0, "blocks": 18, "pinned_blocks": 18, "ram_blocks": 0, "stream_blocks": 0, "pinned_GiB": 1.6, "ram_GiB": 0.0, "slots": 6, "threads": 4, "lanes": 4, "l2": null, "load_s": 1.9, "step_s": [0.2756, 0.2801, 0.2756, 0.2756, 0.2755, 0.2755, 0.2756, 0.2756, 0.2765, 0.2756], "mean_step_s": 0.2761, "wall_per_step_s": 0.2762, "disk_GB_per_step": 0.0, "vram_free_GiB": 4.66, "rss_GiB": 1.93, "overflow": false, "cpu_blocks": 0, "cpu_apply_draw_s": null}
+=== --dir n71582784_split --placement mixed --block-mb 96 --block-rows 8388608 --pinned-gb 0.5 --ram-gb 0.5 --steps 5 --tag mixed96-pin.5-ram.5
+engine: n=71,582,784 blocks=18 placement=mixed (pinned 6, ram 5, stream 7) pinned=1.04 GiB ram=0.47 GiB escapes=12260 load 1.6 s
+{"tag": "mixed96-pin.5-ram.5", "dir": "n71582784_split", "n": 71582784, "placement": "mixed", "block_rows": 8388608, "block_mb": 96.0, "blocks": 18, "pinned_blocks": 6, "ram_blocks": 5, "stream_blocks": 7, "pinned_GiB": 1.04, "ram_GiB": 0.47, "slots": 6, "threads": 4, "lanes": 4, "l2": null, "load_s": 1.6, "step_s": [0.4148, 0.4355, 0.4374, 0.4384, 0.4387], "mean_step_s": 0.4329, "wall_per_step_s": 0.4361, "disk_GB_per_step": 1.21, "vram_free_GiB": 4.66, "rss_GiB": 1.83, "overflow": false, "cpu_blocks": 0, "cpu_apply_draw_s": null}
+=== --dir n71582784_split --placement vram --steps 10 --cpu-blocks 3 --tag vram+cpu3
+engine: n=71,582,784 blocks=18 placement=vram (pinned 0, ram 0, stream 0) pinned=0.00 GiB ram=0.00 GiB escapes=12260 load 2.8 s
+{"tag": "vram+cpu3", "dir": "n71582784_split", "n": 71582784, "placement": "vram", "block_rows": 4194304, "block_mb": null, "blocks": 18, "pinned_blocks": 0, "ram_blocks": 0, "stream_blocks": 0, "pinned_GiB": 0.0, "ram_GiB": 0.0, "slots": 6, "threads": 4, "lanes": 4, "l2": null, "load_s": 3.1, "step_s": [0.2631, 0.2661, 0.263, 0.2633, 0.2631, 0.2641, 0.263, 0.2633, 0.263, 0.2622], "mean_step_s": 0.2634, "wall_per_step_s": 0.2629, "disk_GB_per_step": 0.0, "vram_free_GiB": 3.09, "rss_GiB": 0.74, "overflow": false, "cpu_blocks": 3, "cpu_apply_draw_s": [0.0291, 0.2052]}
+=== --dir n71582784_split --placement vram --steps 10 --cpu-blocks 4 --tag vram+cpu4
+engine: n=71,582,784 blocks=18 placement=vram (pinned 0, ram 0, stream 0) pinned=0.00 GiB ram=0.00 GiB escapes=12260 load 2.8 s
+{"tag": "vram+cpu4", "dir": "n71582784_split", "n": 71582784, "placement": "vram", "block_rows": 4194304, "block_mb": null, "blocks": 18, "pinned_blocks": 0, "ram_blocks": 0, "stream_blocks": 0, "pinned_GiB": 0.0, "ram_GiB": 0.0, "slots": 6, "threads": 4, "lanes": 4, "l2": null, "load_s": 3.1, "step_s": [0.3886, 0.3921, 0.4116, 0.3752, 0.3763, 0.3724, 0.3654, 0.3662, 0.3605, 0.3654], "mean_step_s": 0.3774, "wall_per_step_s": 0.3778, "disk_GB_per_step": 0.0, "vram_free_GiB": 3.09, "rss_GiB": 0.83, "overflow": false, "cpu_blocks": 4, "cpu_apply_draw_s": [0.0241, 0.3173]}
+=== --dir n71582784_split --placement vram --steps 10 --cpu-blocks 5 --tag vram+cpu5
+engine: n=71,582,784 blocks=18 placement=vram (pinned 0, ram 0, stream 0) pinned=0.00 GiB ram=0.00 GiB escapes=12260 load 2.8 s
+{"tag": "vram+cpu5", "dir": "n71582784_split", "n": 71582784, "placement": "vram", "block_rows": 4194304, "block_mb": null, "blocks": 18, "pinned_blocks": 0, "ram_blocks": 0, "stream_blocks": 0, "pinned_GiB": 0.0, "ram_GiB": 0.0, "slots": 6, "threads": 4, "lanes": 4, "l2": null, "load_s": 3.1, "step_s": [0.4618, 0.4662, 0.4661, 0.489, 0.4775, 0.4789, 0.4718, 0.5773, 0.5298, 0.5167], "mean_step_s": 0.4935, "wall_per_step_s": 0.4935, "disk_GB_per_step": 0.0, "vram_free_GiB": 3.09, "rss_GiB": 0.91, "overflow": false, "cpu_blocks": 5, "cpu_apply_draw_s": [0.0313, 0.4363]}
+=== --dir n71582784_split --placement pinned --steps 10 --cpu-blocks 4 --tag pinned+cpu4
+engine: n=71,582,784 blocks=18 placement=pinned (pinned 18, ram 0, stream 0) pinned=1.60 GiB ram=0.00 GiB escapes=12260 load 2.0 s
+{"tag": "pinned+cpu4", "dir": "n71582784_split", "n": 71582784, "placement": "pinned", "block_rows": 4194304, "block_mb": null, "blocks": 18, "pinned_blocks": 18, "ram_blocks": 0, "stream_blocks": 0, "pinned_GiB": 1.6, "ram_GiB": 0.0, "slots": 6, "threads": 4, "lanes": 4, "l2": null, "load_s": 2.1, "step_s": [0.3488, 0.349, 0.3602, 0.3807, 0.3714, 0.3506, 0.3518, 0.3591, 0.368, 0.3583], "mean_step_s": 0.3598, "wall_per_step_s": 0.3599, "disk_GB_per_step": 0.0, "vram_free_GiB": 4.69, "rss_GiB": 2.44, "overflow": false, "cpu_blocks": 4, "cpu_apply_draw_s": [0.0347, 0.2895]}
+[gpulock] C-71b: held 51 s, exit 0

@@ -1,0 +1,9 @@
+[gpulock] C-nsys71: waiting for gen-cmp 59548 02:47:08
+[gpulock] C-nsys71: acquired after 3 s
+GPU 0: General Metrics for NVIDIA TU11x
+Collecting data...
+Generating 'C:\Users\dougl\AppData\Local\Temp\nsys-dougl\nsys-report-62c9.qdstrm'
+[1/1] [0%                          ] e71_mixed.nsys-rep[1/1] [0%                          ] e71_mixed.nsys-rep[1/1] [1%                          ] e71_mixed.nsys-rep[1/1] [2%                          ] e71_mixed.nsys-rep[1/1] [5%                          ] e71_mixed.nsys-rep[1/1] [6%                          ] e71_mixed.nsys-rep[1/1] [7%                          ] e71_mixed.nsys-rep[1/1] [8%                          ] e71_mixed.nsys-rep[1/1] [9%                          ] e71_mixed.nsys-rep[1/1] [10%                         ] e71_mixed.nsys-rep[1/1] [11%                         ] e71_mixed.nsys-rep[1/1] [12%                         ] e71_mixed.nsys-rep[1/1] [13%                         ] e71_mixed.nsys-rep[1/1] [14%                         ] e71_mixed.nsys-rep[1/1] [=15%                        ] e71_mixed.nsys-rep[1/1] [=16%                        ] e71_mixed.nsys-rep[1/1] [=17%                        ] e71_mixed.nsys-rep[1/1] [==18%                       ] e71_mixed.nsys-rep[1/1] [==19%                       ] e71_mixed.nsys-rep[1/1] [==20%                       ] e71_mixed.nsys-rep[1/1] [==21%                       ] e71_mixed.nsys-rep[1/1] [===================82%      ] e71_mixed.nsys-rep[1/1] [=======================96%  ] e71_mixed.nsys-rep[1/1] [========================98% ] e71_mixed.nsys-rep[1/1] [========================100%] e71_mixed.nsys-rep[1/1] [========================100%] e71_mixed.nsys-rep
+Generated:
+	C:\Users\dougl\polya-overnight\performance_analysis/scale/engine/nsys/e71_mixed.nsys-rep
+[gpulock] C-nsys71: held 20 s, exit 0

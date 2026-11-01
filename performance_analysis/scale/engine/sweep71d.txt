@@ -1,0 +1,7 @@
+# push rows at 71.6M (K = -1: as many as fit; here the whole graph)
+--dir n71582784_split --placement vram --block-mb 96 --block-rows 8388608 --push-k -1 --steps 10 --tag vram-push-all
+--dir n71582784_split --placement pinned --block-mb 96 --block-rows 8388608 --push-k -1 --steps 10 --tag pinned-push-all
+--dir n71582784_split --placement stream --block-mb 96 --block-rows 8388608 --push-k -1 --steps 5 --tag stream-push-all
+--dir n71582784_split --placement stream --block-mb 96 --block-rows 8388608 --push-k 4194304 --steps 5 --tag stream-push-4M
+--dir n71582784_split --placement stream --block-mb 96 --block-rows 8388608 --push-k 16777216 --steps 5 --tag stream-push-16M
+--dir n71582784_split --placement pinned --block-mb 96 --block-rows 8388608 --push-k 16777216 --steps 10 --tag pinned-push-16M

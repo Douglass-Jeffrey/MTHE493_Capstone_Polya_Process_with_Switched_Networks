@@ -14,9 +14,18 @@ class Polya_Process:
         else:
             self.delta = delta
         self.memory_enabled = memory_enabled
+        self._mem_bits = None
         if self.memory_enabled != False:
             self.memory_decay_time = memory_decay_time
-            self.memory_arr = cp.zeros((self.memory_decay_time, self.graph.num_nodes), dtype=cp.int32)
+            # With two colours on the GPU the last M draws are kept as bits (9 B per node at M = 72 instead of
+            # 288 B: 0.6 GB at 71.6M nodes instead of 20.6 GB, which does not fit). memory_arr still reads and
+            # assigns as an (M, n) array of colours, so code that extends it keeps working
+            if (csr_kernels.urns_supported(self.graph.node_urns) and self.graph.num_colors == 2
+                    and self.memory_decay_time > 0):
+                self._mem_bits = cp.zeros((self.memory_decay_time, (self.graph.num_nodes + 31) // 32), dtype=cp.uint32)
+                self._mem_n = self.graph.num_nodes
+            else:
+                self.memory_arr = cp.zeros((self.memory_decay_time, self.graph.num_nodes), dtype=cp.int32)
             self.remove_initial_urns = remove_initial_urns
             if self.remove_initial_urns != False:
                 self.initial_urns = self.graph.node_urns.copy()
@@ -89,7 +98,34 @@ class Polya_Process:
             draws = cp.minimum(draws, self.graph.num_colors - 1)
         return draws
 
+    @property
+    def memory_arr(self):
+        if self._mem_bits is not None:
+            return csr_kernels.unpack_bit_rows(self._mem_bits, self._mem_n)
+        return self._memory_arr
+
+    @memory_arr.setter
+    def memory_arr(self, arr):
+        if self._mem_bits is not None:
+            self._mem_bits = csr_kernels.pack_bit_rows(arr)
+            self._mem_n = arr.shape[1]
+        else:
+            self._memory_arr = arr
+
     def memory_step(self, draws):
+        if self._mem_bits is not None:
+            if self._mem_n != self.graph.num_nodes:
+                raise ValueError(f"memory holds {self._mem_n} nodes but the graph has {self.graph.num_nodes}")
+            if csr_kernels.urns_supported(self.graph.node_urns):
+                if (self.step_count == self.memory_decay_time) and self.remove_initial_urns != False:
+                    self.graph.node_urns -= self.initial_urns
+                # expire the draw from M steps ago and record this step's, in one kernel
+                csr_kernels.memory_bits_step(self.graph.node_urns, draws, self.mem_decay,
+                                             self._mem_bits[self.step_count % self.memory_decay_time],
+                                             self.step_count > self.memory_decay_time)
+                return
+            # urns no longer in a form the kernel reads: continue with the array version
+            self._memory_arr, self._mem_bits = self.memory_arr, None
         if ((self.step_count == self.memory_decay_time) and self.remove_initial_urns != False):
             # when we hit memory decay time, delete all initial urns from memory 
             self.graph.node_urns -= self.initial_urns

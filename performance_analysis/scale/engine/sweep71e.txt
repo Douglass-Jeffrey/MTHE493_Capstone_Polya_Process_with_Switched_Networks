@@ -1,0 +1,6 @@
+# CPU+GPU at 71.6M with the prefetching CPU step (byte blocks of 48 MB for a finer split)
+--dir n71582784_split --placement vram --block-mb 48 --block-rows 8388608 --steps 10 --tag vram-48MB
+--dir n71582784_split --placement vram --block-mb 48 --block-rows 8388608 --steps 10 --cpu-blocks 4 --tag vram48+cpu4
+--dir n71582784_split --placement vram --block-mb 48 --block-rows 8388608 --steps 10 --cpu-blocks 6 --tag vram48+cpu6
+--dir n71582784_split --placement vram --block-mb 48 --block-rows 8388608 --steps 10 --cpu-blocks 8 --tag vram48+cpu8
+--dir n71582784_split --placement vram --block-mb 48 --block-rows 8388608 --steps 10 --cpu-blocks 10 --tag vram48+cpu10

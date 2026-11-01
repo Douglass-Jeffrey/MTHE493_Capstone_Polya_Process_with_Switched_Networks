@@ -1,0 +1,20 @@
+[gpulock] C-io: waiting for A-gran64 28912 02:30:04
+[gpulock] C-io: acquired after 192 s
+pinned {'pin_error': 'cudaErrorMemoryAllocation: out of memory', 'pinned_gb_ok': 15, 'pin_s': 1.94}
+{'threads': 1, 'chunk_mb': 1, 'GBps': 1.34}
+{'threads': 1, 'chunk_mb': 4, 'GBps': 1.51}
+{'threads': 1, 'chunk_mb': 16, 'GBps': 1.55}
+{'threads': 2, 'chunk_mb': 1, 'GBps': 1.58}
+{'threads': 2, 'chunk_mb': 4, 'GBps': 1.62}
+{'threads': 2, 'chunk_mb': 16, 'GBps': 1.62}
+{'threads': 4, 'chunk_mb': 1, 'GBps': 1.63}
+{'threads': 4, 'chunk_mb': 4, 'GBps': 1.63}
+{'threads': 4, 'chunk_mb': 16, 'GBps': 1.6}
+{'threads': 8, 'chunk_mb': 1, 'GBps': 1.62}
+{'threads': 8, 'chunk_mb': 4, 'GBps': 1.62}
+{'threads': 8, 'chunk_mb': 16, 'GBps': 1.62}
+{'grid': 96, 'GBps': 13.2}
+{'grid': 192, 'GBps': 13.21}
+{'grid': 768, 'GBps': 13.18}
+{"pin_error": "cudaErrorMemoryAllocation: out of memory", "pinned_gb_ok": 15, "pin_s": 1.94, "nvme_unbuffered": [{"threads": 1, "chunk_mb": 1, "GBps": 1.34}, {"threads": 1, "chunk_mb": 4, "GBps": 1.51}, {"threads": 1, "chunk_mb": 16, "GBps": 1.55}, {"threads": 2, "chunk_mb": 1, "GBps": 1.58}, {"threads": 2, "chunk_mb": 4, "GBps": 1.62}, {"threads": 2, "chunk_mb": 16, "GBps": 1.62}, {"threads": 4, "chunk_mb": 1, "GBps": 1.63}, {"threads": 4, "chunk_mb": 4, "GBps": 1.63}, {"threads": 4, "chunk_mb": 16, "GBps": 1.6}, {"threads": 8, "chunk_mb": 1, "GBps": 1.62}, {"threads": 8, "chunk_mb": 4, "GBps": 1.62}, {"threads": 8, "chunk_mb": 16, "GBps": 1.62}], "read_check": true, "zerocopy": [{"grid": 96, "GBps": 13.2}, {"grid": 192, "GBps": 13.21}, {"grid": 768, "GBps": 13.18}]}
+[gpulock] C-io: held 21 s, exit 0

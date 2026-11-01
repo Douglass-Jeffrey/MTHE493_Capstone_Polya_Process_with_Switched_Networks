@@ -1,0 +1,31 @@
+[gpulock] gen-1b: waiting for A-e2e 23656 03:16:33
+[gpulock] gen-1b: acquired after 21 s
+disk free 44.2 GB, need ~29.8 GB
+[gen] n=999,921,184 batches=8940 n_out=2,999,763,360 (11.17 GB)
+[gen] VRAM cache 3.00 GB (27% of the out part)
+[gen]   batch 1/8940  nodes 72  0.1 s
+[gen]   batch 513/8940  nodes 4,168  0.7 s
+[gen]   batch 1025/8940  nodes 8,264  1.2 s
+[gen]   batch 1537/8940  nodes 12,360  1.7 s
+[gen]   batch 2049/8940  nodes 47,776  2.2 s
+[gen]   batch 2561/8940  nodes 113,312  2.7 s
+[gen]   batch 3073/8940  nodes 178,848  3.2 s
+[gen]   batch 3585/8940  nodes 261,664  3.7 s
+[gen]   batch 4097/8940  nodes 1,310,240  4.4 s
+[gen]   batch 4609/8940  nodes 2,358,816  5.1 s
+[gen]   batch 5121/8940  nodes 3,407,392  5.7 s
+[gen]   batch 5633/8940  nodes 12,719,648  6.8 s
+[gen]   batch 6145/8940  nodes 29,496,864  7.9 s
+[gen]   batch 6657/8940  nodes 46,274,080  9.0 s
+[gen]   batch 7169/8940  nodes 71,407,136  10.2 s
+[gen]   batch 7681/8940  nodes 339,842,592  15.8 s
+[gen]   batch 8193/8940  nodes 608,278,048  24.3 s
+[gen]   batch 8705/8940  nodes 876,713,504  35.2 s
+[gen]   batch 8940/8940  nodes 999,921,184  40.4 s
+[gen] growth 40.4 s, resample rounds 872, rows left with duplicates 0
+[gen] in-degrees + in_ptr 25.6 s, nnz_in 2,999,767,392
+[gen] in part filled in 14 passes, 46.9 s
+[gen] done 115.3 s  {'peak_rss_gb': 15.0, 'min_avail_ram_gb': 5.92, 'min_vram_free_gb': 0.0}  disk 29.80 GB
+validation (71 s): INVALID: in row 0 lists a node that did not choose 0; in row 1 lists a node that did not choose 1; in row 2 lists a node that did not choose 2
+| ba_1b | 999,921,184 | 40.44 | 25.57 | 46.89 (14 passes) | 72.46 | 115.34 | 15.0 | 5.92 | 0.0 | 29.8 | INVALID: in row 0 lists a node that did not choose 0; in row 1 lists a node that did not choose 1; in row 2 lists a node that did not choose 2
+[gpulock] gen-1b: held 187 s, exit 0

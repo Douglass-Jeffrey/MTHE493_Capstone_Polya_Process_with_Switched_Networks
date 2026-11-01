@@ -319,3 +319,55 @@ def relabel(indptr, indices, order):
         buf[:t - s].get(out=out[s:t])
         r0 = r1
     return new_indptr, out
+
+
+# Finite memory with two colours, one bit per node and step (Polya_Process.memory_step). A warp handles 32
+# consecutive nodes, so it reads and rewrites exactly one 32-bit word of the ring row.
+_MEM_SRC = r"""
+extern "C" __global__ void memory_bits_step(int* __restrict__ urns, const int* __restrict__ draws,
+                                            const int* __restrict__ decay, unsigned int* __restrict__ row,
+                                            int expire, long long n, long long words)
+{
+    long long i = (long long)blockIdx.x * blockDim.x + threadIdx.x;
+    int lane = threadIdx.x & 31;
+    bool d = i < n && draws[i] != 0;
+    unsigned int word = __ballot_sync(0xffffffffu, d);
+    if (i < n && expire) {
+        // the draw from M steps ago: take its decay off that colour, as memory_step does
+        int old = (row[i >> 5] >> lane) & 1;
+        urns[2 * i + old] -= decay[2 * i + old];
+    }
+    __syncwarp();
+    if (lane == 0 && (i >> 5) < words) row[i >> 5] = word;
+}
+"""
+_mem_kernel = []
+
+
+def memory_bits_step(urns, draws, decay, row, expire):
+    """urns (n, 2) int32; draws 0/1; decay (n, 2); row: this step's ring row (uint32 bits), read then rewritten."""
+    if not _mem_kernel:
+        _mem_kernel.append(cp.RawModule(code=_MEM_SRC).get_function("memory_bits_step"))
+    n = urns.shape[0]
+    if draws.dtype != cp.int32:
+        draws = draws.astype(cp.int32)
+    if not (isinstance(decay, cp.ndarray) and decay.dtype == cp.int32 and decay.flags.c_contiguous):
+        decay = cp.ascontiguousarray(cp.asarray(decay), dtype=cp.int32)
+    assert decay.shape == urns.shape and draws.shape == (n,)
+    _mem_kernel[0](((n + _BLOCK - 1) // _BLOCK,), (_BLOCK,),
+                   (urns, draws, decay, row, np.int32(bool(expire)), np.int64(n), np.int64(row.size)))
+
+
+def unpack_bit_rows(bits, n):
+    """(rows, ceil(n/32)) uint32 bit rows -> (rows, n) int32 of 0/1 (bit k of word w is node 32w + k)."""
+    shifts = cp.arange(32, dtype=cp.uint32)
+    return ((bits[:, :, None] >> shifts) & 1).reshape(bits.shape[0], -1)[:, :n].astype(cp.int32)
+
+
+def pack_bit_rows(arr):
+    """(rows, n) array of 0/1 -> (rows, ceil(n/32)) uint32 bit rows."""
+    rows, n = arr.shape
+    w = (n + 31) // 32
+    b = cp.zeros((rows, w * 32), dtype=cp.uint32)
+    b[:, :n] = cp.asarray(arr) != 0
+    return (b.reshape(rows, w, 32) << cp.arange(32, dtype=cp.uint32)).sum(axis=2, dtype=cp.uint32)

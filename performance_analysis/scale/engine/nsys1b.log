@@ -1,0 +1,9 @@
+[gpulock] C-nsys1b: waiting for gen-512 74516 03:25:43
+[gpulock] C-nsys1b: acquired after 9 s
+GPU 0: General Metrics for NVIDIA TU11x
+Collecting data...
+Generating 'C:\Users\dougl\AppData\Local\Temp\nsys-dougl\nsys-report-c878.qdstrm'
+[1/1] [0%                          ] e1b_pull.nsys-rep[1/1] [0%                          ] e1b_pull.nsys-rep[1/1] [1%                          ] e1b_pull.nsys-rep[1/1] [2%                          ] e1b_pull.nsys-rep[1/1] [5%                          ] e1b_pull.nsys-rep[1/1] [6%                          ] e1b_pull.nsys-rep[1/1] [7%                          ] e1b_pull.nsys-rep[1/1] [8%                          ] e1b_pull.nsys-rep[1/1] [9%                          ] e1b_pull.nsys-rep[1/1] [10%                         ] e1b_pull.nsys-rep[1/1] [11%                         ] e1b_pull.nsys-rep[1/1] [12%                         ] e1b_pull.nsys-rep[1/1] [13%                         ] e1b_pull.nsys-rep[1/1] [14%                         ] e1b_pull.nsys-rep[1/1] [=15%                        ] e1b_pull.nsys-rep[1/1] [=16%                        ] e1b_pull.nsys-rep[1/1] [=17%                        ] e1b_pull.nsys-rep[1/1] [==18%                       ] e1b_pull.nsys-rep[1/1] [==19%                       ] e1b_pull.nsys-rep[1/1] [==20%                       ] e1b_pull.nsys-rep[1/1] [==21%                       ] e1b_pull.nsys-rep[1/1] [====================83%     ] e1b_pull.nsys-rep[1/1] [=======================96%  ] e1b_pull.nsys-rep[1/1] [========================98% ] e1b_pull.nsys-rep[1/1] [========================100%] e1b_pull.nsys-rep[1/1] [========================100%] e1b_pull.nsys-rep
+Generated:
+	C:\Users\dougl\polya-overnight\performance_analysis/scale/engine/nsys/e1b_pull.nsys-rep
+[gpulock] C-nsys1b: held 85 s, exit 0

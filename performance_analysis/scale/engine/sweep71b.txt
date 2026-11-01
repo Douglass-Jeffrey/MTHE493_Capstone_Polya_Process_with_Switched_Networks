@@ -1,0 +1,7 @@
+# byte-sized blocks and more CPU blocks, 71.6M
+--dir n71582784_split --placement pinned --block-mb 96 --block-rows 8388608 --steps 10 --tag pinned-96MB
+--dir n71582784_split --placement mixed --block-mb 96 --block-rows 8388608 --pinned-gb 0.5 --ram-gb 0.5 --steps 5 --tag mixed96-pin.5-ram.5
+--dir n71582784_split --placement vram --steps 10 --cpu-blocks 3 --tag vram+cpu3
+--dir n71582784_split --placement vram --steps 10 --cpu-blocks 4 --tag vram+cpu4
+--dir n71582784_split --placement vram --steps 10 --cpu-blocks 5 --tag vram+cpu5
+--dir n71582784_split --placement pinned --steps 10 --cpu-blocks 4 --tag pinned+cpu4

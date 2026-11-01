@@ -193,10 +193,12 @@ class Barabasi_Albert_Growth:
                 pool.free_all_blocks()
         #print ("stubs after growth:\n", self.stubs[:self.num_stubs])
 
-    def finalize_growth(self):
+    def finalize_growth(self, release_edges=True):
         # Growth is over: the stub list and the graph's edge buffer are not needed after the CSR is built.
-        # Freed here so the Polya step's arrays fit in VRAM (at 71.6M nodes they are 1.6 GB and 3.9 GB)
+        # Freed here so the Polya step's arrays fit in VRAM (at 71.6M nodes they are 1.6 GB and 3.9 GB).
+        # Pass release_edges=False to keep the edge buffer when interventions will add nodes mid-run
+        # (Switch_Network_Node_Growth_Intervention with mid_polya_intervention=True appends edges and rebuilds)
         self._stubs_head = None
         self.num_stubs = 0
-        self.graph.build_csr(release_edges=True)
+        self.graph.build_csr(release_edges=release_edges)
         #print("stubs final size:", self.num_stubs)

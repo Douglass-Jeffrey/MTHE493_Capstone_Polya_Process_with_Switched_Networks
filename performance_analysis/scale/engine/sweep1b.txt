@@ -1,0 +1,5 @@
+# 999,921,184 nodes (data/ba_1b), mixed placement sized from available RAM (3 GB left to the system)
+--dir ba_1b --placement mixed --block-mb 96 --block-rows 8388608 --auto-budget --push-k 0 --warmup 1 --steps 3 --tag 1b-pull
+--dir ba_1b --placement mixed --block-mb 96 --block-rows 8388608 --auto-budget --push-k 8388608 --warmup 1 --steps 3 --tag 1b-push8M
+--dir ba_1b --placement mixed --block-mb 96 --block-rows 8388608 --auto-budget --push-k 25165824 --warmup 1 --steps 3 --tag 1b-push24M
+--dir ba_1b --placement mixed --block-mb 96 --block-rows 8388608 --auto-budget --push-k -1 --vram-margin 0.3 --warmup 1 --steps 3 --tag 1b-push-auto

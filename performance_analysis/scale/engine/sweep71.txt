@@ -1,0 +1,12 @@
+# 71.6M nodes (growth order), engine placements; Philox, 16-bit urns, LANES 4 unless noted
+--dir n71582784_split --placement vram --steps 10 --tag vram
+--dir n71582784_split --placement vram --steps 10 --l2 32 --tag vram-l2-32
+--dir n71582784_split --placement vram --steps 10 --lanes 2 --tag vram-lanes2
+--dir n71582784_split --placement vram --steps 10 --block-rows 16777216 --tag vram-blk16M
+--dir n71582784_split --placement pinned --steps 10 --tag pinned
+--dir n71582784_split --placement stream --steps 5 --tag stream
+--dir n71582784_split --placement mixed --pinned-gb 1.0 --steps 5 --tag mixed-pin1
+--dir n71582784_split --placement mixed --pinned-gb 0.6 --ram-gb 1.2 --steps 10 --tag mixed-pin0.6-ram1.2
+--dir n71582784_split --placement mixed --pinned-gb 0 --ram-gb 3 --steps 10 --tag ram-all
+--dir n71582784_split --placement vram --steps 10 --cpu-blocks 1 --tag vram+cpu1
+--dir n71582784_split --placement vram --steps 10 --cpu-blocks 2 --tag vram+cpu2

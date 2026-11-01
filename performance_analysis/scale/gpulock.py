@@ -13,7 +13,7 @@ import time
 
 import psutil
 
-LOCK = os.path.join(r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad", "gpu.lock")
+LOCK = os.path.join(os.environ.get("POLYA_WORK") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "work"), "gpu.lock")
 OWNER = os.path.join(LOCK, "owner")
 
 

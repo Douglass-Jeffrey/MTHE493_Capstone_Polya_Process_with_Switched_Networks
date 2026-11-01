@@ -5,8 +5,24 @@ from . import csr_kernels
 class Polya_Process:
     """
     Fully vectorized Polya process for all nodes.
+
+    kernel: 'auto' uses the fused gather-and-draw kernel when it applies (two colours, unweighted CSR, int32 urns
+    on the GPU) and the general path otherwise; 'fused' requires the fused kernel; 'cusparse' is the original
+    step: cuSPARSE product A @ U in float64, then CuPy array operations for the draw and the update.
+    memory_format: 'auto' keeps finite memory as bits when it can (two colours on the GPU), 'bits' requires it,
+    'int32' keeps the original (M, n) int32 array.
     """
-    def __init__(self, graph: Graph, delta=None, memory_enabled = False, memory_decay_time=0, mem_decay = None, remove_initial_urns = False):
+    KERNELS = ('auto', 'fused', 'cusparse')
+    MEMORY_FORMATS = ('auto', 'bits', 'int32')
+
+    def __init__(self, graph: Graph, delta=None, memory_enabled = False, memory_decay_time=0, mem_decay = None, remove_initial_urns = False,
+                 kernel='auto', memory_format='auto'):
+        if kernel not in self.KERNELS:
+            raise ValueError(f"kernel must be one of {self.KERNELS}, got {kernel!r}")
+        if memory_format not in self.MEMORY_FORMATS:
+            raise ValueError(f"memory_format must be one of {self.MEMORY_FORMATS}, got {memory_format!r}")
+        self.kernel = kernel
+        self.memory_format = memory_format
         self.graph = graph
         self.step_count = 1
         if delta is None:
@@ -20,8 +36,11 @@ class Polya_Process:
             # With two colours on the GPU the last M draws are kept as bits (9 B per node at M = 72 instead of
             # 288 B: 0.6 GB at 71.6M nodes instead of 20.6 GB, which does not fit). memory_arr still reads and
             # assigns as an (M, n) array of colours, so code that extends it keeps working
-            if (csr_kernels.urns_supported(self.graph.node_urns) and self.graph.num_colors == 2
-                    and self.memory_decay_time > 0):
+            bits_ok = (csr_kernels.urns_supported(self.graph.node_urns) and self.graph.num_colors == 2
+                       and self.memory_decay_time > 0)
+            if self.memory_format == 'bits' and not bits_ok:
+                raise ValueError("memory_format='bits' needs two colours and int32 urns on the GPU")
+            if bits_ok and self.memory_format != 'int32':
                 self._mem_bits = cp.zeros((self.memory_decay_time, (self.graph.num_nodes + 31) // 32), dtype=cp.uint32)
                 self._mem_n = self.graph.num_nodes
             else:
@@ -36,12 +55,14 @@ class Polya_Process:
 
 
     def step(self):
-        draws = self._fused_draws()  # GPU fast path, None when it does not apply
+        draws = self._fused_draws() if self.kernel != 'cusparse' else None  # GPU fast path, None when it does not apply
         if draws is None:
+            if self.kernel == 'fused':
+                raise ValueError("kernel='fused' needs two colours, an unweighted CSR (Graph.build_csr) and int32 urns on the GPU")
             draws = self._draws()
 
         # Vectorized urn update
-        if csr_kernels.urns_supported(self.graph.node_urns) and self._delta_supported():
+        if self.kernel != 'cusparse' and csr_kernels.urns_supported(self.graph.node_urns) and self._delta_supported():
             # node_urns[i, draws[i]] += delta[i, draws[i]] in one kernel, no index arrays
             csr_kernels.apply_draws(draws, self.delta, self.graph.node_urns)
         else:
@@ -72,7 +93,7 @@ class Polya_Process:
         return isinstance(self.delta, cp.ndarray) and self.delta.shape == self.graph.node_urns.shape
 
     def _draws(self):
-        mega = self.graph.get_mega_urns()  # num_nodes x num_colors)
+        mega = self.graph.get_mega_urns(method='spmm' if self.kernel == 'cusparse' else 'auto')  # num_nodes x num_colors)
         # Compute sums of balls in each mega urn
         row_sums = cp.sum(mega, axis=1, keepdims=True)
         row_sums[row_sums == 0] = 1  # if mega urn is zero, avoid div by zero

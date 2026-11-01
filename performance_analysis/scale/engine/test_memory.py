@@ -10,7 +10,7 @@ import numpy as np
 from capstone_optimized.core import Graph, Polya_Process
 from capstone_optimized.scale.engine import Engine
 
-S = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad"
+from capstone_optimized.scale.paths import CACHE, DATA
 ap = argparse.ArgumentParser()
 ap.add_argument("--name", default="n17895744")
 ap.add_argument("--M", type=int, default=3)
@@ -18,8 +18,8 @@ ap.add_argument("--steps", type=int, default=9)
 ap.add_argument("--seed", type=int, default=11)
 args = ap.parse_args()
 md5 = lambda a: hashlib.md5(np.ascontiguousarray(a).tobytes()).hexdigest()
-c = os.path.join(S, "opt", "cache", args.name)
-split = os.path.join(S, "data", args.name + "_split")
+c = os.path.join(CACHE, args.name)
+split = os.path.join(DATA, args.name + "_split")
 
 indptr = cp.asarray(np.load(os.path.join(c, "indptr.npy")))
 indices = cp.asarray(np.load(os.path.join(c, "indices.npy")))
@@ -50,9 +50,9 @@ eng.close()
 hs = {}
 for pl in ("vram", "mixed"):
     eng = Engine(split, placement=pl, block_mb=8, pinned_budget_gb=0.1, ram_budget_gb=0.1, seed=3)
-    eng.enable_memory(args.M, ring_path=os.path.join(S, "data", "ring_test.u8") if pl == "mixed" else None)
+    eng.enable_memory(args.M, ring_path=os.path.join(DATA, "ring_test.u8") if pl == "mixed" else None)
     eng.run(args.steps)
     hs[pl] = md5(eng.urns.get())
     eng.close()
-os.remove(os.path.join(S, "data", "ring_test.u8"))
+os.remove(os.path.join(DATA, "ring_test.u8"))
 print("philox + memory, vram vs mixed (ring in a file):", hs, "same:", len(set(hs.values())) == 1)

@@ -540,6 +540,8 @@ class Engine:
         GPU is already drawing). Philox only.
         """
         assert not self.K, "the CPU share with push rows is not implemented"
+        if not 0 < nblocks <= len(self.blocks):
+            raise ValueError(f"the CPU can draw 1 to {len(self.blocks)} blocks of this graph, not {nblocks}")
         from .native import build as _build
         lib = ctypes.CDLL(_build.build("cpu_step"))
         P, I64, U64 = ctypes.c_void_p, ctypes.c_longlong, ctypes.c_ulonglong

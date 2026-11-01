@@ -13,8 +13,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--src", choices=["orig", "new"], required=True)
 ap.add_argument("--out", required=True)
 args = ap.parse_args()
-BASE = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\base_src\src"
-sys.path.insert(0, BASE if args.src == "orig" else r"C:\Users\dougl\polya-overnight\src")
+REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
+BASE = os.path.join(os.environ.get("POLYA_WORK") or os.path.join(REPO, "work"), "base_src", "src")   # as scale/paths.py, computed here because the package is imported after choosing its source
+sys.path.insert(0, BASE if args.src == "orig" else os.path.join(REPO, "src"))
 from capstone_optimized.cupy_fallback import cp                                   # noqa: E402
 from capstone_optimized.core import (Graph, Barabasi_Albert_Growth, Polya_Process,  # noqa: E402
                                      Switch_Network_Node_Growth_Intervention)
@@ -28,7 +29,10 @@ for bs in (8, 128, 2048):
             setattr(b.graph, "node_urns", cp.vstack([b.graph.node_urns, cp.ones((k, 2), cp.int32)])),
             setattr(b.graph, "num_nodes", b.graph.num_nodes + k)))
 iv = Switch_Network_Node_Growth_Intervention(g)          # needs the edge buffer, so before finalize_growth
-growth.finalize_growth(release_edges=False)   # keeps the edge buffer for the mid-run interventions
+try:
+    growth.finalize_growth(release_edges=False)   # keeps the edge buffer for the mid-run interventions
+except TypeError:   # code before the fix, where finalize_growth always frees it: build the CSR and keep the edges
+    g.build_csr()
 n = g.num_nodes
 p = Polya_Process(g, memory_enabled=True, memory_decay_time=6,
                   mem_decay=cp.random.randint(0, 2, size=(n, 2)).astype(cp.int32))

@@ -11,7 +11,7 @@ from cupy.cuda import nvtx
 
 from capstone_optimized.scale.engine import Engine
 
-S = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad"
+from capstone_optimized.scale.paths import DATA
 ap = argparse.ArgumentParser()
 ap.add_argument("--dir", required=True, help="split-format directory (absolute, or a name under data/)")
 ap.add_argument("--placement", default="auto")
@@ -37,7 +37,7 @@ ap.add_argument("--push-k", type=int, default=0, help="push rows [init, K); -1 =
 ap.add_argument("--vram-margin", type=float, default=0.4)
 ap.add_argument("--tag", default="")
 args = ap.parse_args()
-d = args.dir if os.path.isabs(args.dir) else os.path.join(S, "data", args.dir)
+d = args.dir if os.path.isabs(args.dir) else os.path.join(DATA, args.dir)
 
 proc = psutil.Process()
 if args.auto_budget:

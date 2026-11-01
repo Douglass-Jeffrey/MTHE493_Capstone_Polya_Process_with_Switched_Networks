@@ -10,7 +10,7 @@ import numpy as np
 from capstone_optimized.core import csr_kernels
 from capstone_optimized.scale.engine import Engine
 
-S = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad"
+from capstone_optimized.scale.paths import CACHE, DATA
 ap = argparse.ArgumentParser()
 ap.add_argument("--name", default="n17895744")
 ap.add_argument("--steps", type=int, default=5)
@@ -18,8 +18,8 @@ ap.add_argument("--push-k", type=int, default=2 << 20)
 ap.add_argument("--seed", type=int, default=5)
 args = ap.parse_args()
 md5 = lambda a: hashlib.md5(np.ascontiguousarray(a).tobytes()).hexdigest()
-split = os.path.join(S, "data", args.name + "_split")
-c = os.path.join(S, "opt", "cache", args.name)
+split = os.path.join(DATA, args.name + "_split")
+c = os.path.join(CACHE, args.name)
 
 indptr = cp.asarray(np.load(os.path.join(c, "indptr.npy")))
 indices = cp.asarray(np.load(os.path.join(c, "indices.npy")))

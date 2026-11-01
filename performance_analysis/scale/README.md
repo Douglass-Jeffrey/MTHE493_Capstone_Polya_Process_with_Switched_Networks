@@ -65,14 +65,15 @@ file) and push mode for hub rows.
 | **999.9M nodes, mixed pinned / RAM / drive** | **3.93 s** |
 
 ## Data and how to regenerate it
-The 10^9-node graph (29.8 GB) was deleted afterwards to give C: its space back. To rebuild it (about 2 minutes):
-from the worktree root with `PYTHONPATH=src`,
+The 10^9-node graph (29.8 GB) was deleted afterwards to give C: its space back. To rebuild it and time the step
+(about 2 minutes to generate, then ~4 s per step), from the repository root:
 
-    python performance_analysis/scale/gpulock.py gen -- python performance_analysis/scale/gen/run_gen.py 1788 ba_1b --validate
-    python performance_analysis/scale/gpulock.py run -- python performance_analysis/scale/engine/bench_engine.py --dir ba_1b --placement mixed --block-mb 96 --block-rows 8388608 --auto-budget
+    python run_sim.py --backend engine --batches 1788 --placement mixed --block-mb 96 --block-rows 8388608 --auto-budget --steps 5
 
-It needs ~30 GB free on C: and ~20 GB of free RAM (close other programs). The data folder is in the session's
-scratchpad, `...\scratchpad\data`; edit `SCRATCH`/`DATA` in the scripts to put it elsewhere.
+It needs ~30 GB free on the drive and ~20 GB of free RAM (close other programs). Graphs, CSR caches and the
+reference copy of the code for the e2e checks live in `work/` at the repository root (ignored by git), or in the
+folder named by the `POLYA_WORK` environment variable; see `src/capstone_optimized/scale/paths.py`. The scripts
+here read from the same place, e.g. `bench_engine.py --dir n17895744_split` uses `work/data/n17895744_split`.
 
 ## A. Memory access (details: quick/results.md)
 

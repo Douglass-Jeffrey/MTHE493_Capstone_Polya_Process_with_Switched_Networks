@@ -3,7 +3,7 @@ Generates one graph with scale.gen and appends a line to results.md.
 
     python run_gen.py <batches> <name> [--seed 493] [--dev-cache-gb 3] [--validate] [--ready]
 
-Writes <scratchpad>/data/<name>/. --validate runs split_format.validate plus degree-sum checks;
+Writes work/data/<name>/ (see scale/paths.py). --validate runs split_format.validate plus degree-sum checks;
 --ready creates <name>/READY when everything passed (used for ba_1b).
 """
 import argparse
@@ -16,8 +16,7 @@ import numpy as np
 
 from capstone_optimized.scale import gen, split_format as sf
 
-SCRATCH = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad"
-DATA = os.path.join(SCRATCH, "data")
+from capstone_optimized.scale.paths import DATA
 RESULTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results.md")
 GB = 2**30
 

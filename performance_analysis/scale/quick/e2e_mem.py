@@ -38,8 +38,9 @@ def log(msg):
     print(f"[{time.time() - T0:7.1f}s] {msg}", flush=True)
 
 D = os.path.dirname(os.path.abspath(__file__))
-REPO = r"C:\Users\dougl\polya-overnight"
-sys.path.insert(0, {"orig": os.path.join(r"C:/Users/dougl/AppData/Local/Temp/claude/c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks/7bf0ea5c-bb18-4a6c-8e60-f701292fffbe/scratchpad", "base_src", "src"), "new": os.path.join(REPO, "src")}[args.src])
+REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
+BASE = os.path.join(os.environ.get("POLYA_WORK") or os.path.join(REPO, "work"), "base_src", "src")   # as scale/paths.py, computed here because the package is imported after choosing its source
+sys.path.insert(0, {"orig": BASE, "new": os.path.join(REPO, "src")}[args.src])
 from capstone_optimized.cupy_fallback import cp, CUPY_AVAILABLE
 from capstone_optimized.core import Graph, Barabasi_Albert_Growth, Polya_Process
 import capstone_optimized.core.graph_x as gx

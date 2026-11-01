@@ -13,3 +13,5 @@ performance_analysis/*.png
 performance_analysis/A100_raw_results.zip
 src/capstone_optimized/experiments/old/
 src/capstone_optimized/tools/
+work/
+.vscode/

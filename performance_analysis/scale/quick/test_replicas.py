@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 from capstone_optimized.scale import quick_kernels as qk           # noqa: E402
 from capstone_optimized.scale.replicas import ReplicaPolya         # noqa: E402
 
-CACHE = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\opt\cache"
+from capstone_optimized.scale.paths import CACHE
 name = sys.argv[1] if len(sys.argv) > 1 else "n1118544"
 indptr = cp.asarray(np.load(os.path.join(CACHE, name, "indptr.npy")))
 indices = cp.asarray(np.load(os.path.join(CACHE, name, "indices.npy")))

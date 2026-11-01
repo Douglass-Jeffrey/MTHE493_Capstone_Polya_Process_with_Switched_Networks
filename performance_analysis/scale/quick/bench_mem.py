@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 from capstone_optimized.core import Graph, Polya_Process                # noqa: E402
 from capstone_optimized.scale import quick_kernels as qk                # noqa: E402
 
-CACHE = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\opt\cache"
+from capstone_optimized.scale.paths import CACHE
 
 ap = argparse.ArgumentParser()
 ap.add_argument("cache")

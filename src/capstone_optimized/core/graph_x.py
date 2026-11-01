@@ -42,6 +42,9 @@ class Graph:
         # where build_csr puts the CSR indices: 'auto' (VRAM if it fits), 'device', or 'host' (pinned RAM,
         # read by the GPU over PCIe, as fast here because the step is limited by the random urn reads)
         self.csr_placement = 'auto'
+        # how build_csr builds the CSR: 'auto' (counting sort on the GPU above 10^6 edges, cupyx below),
+        # 'gpu' (always the counting sort), 'scipy' (on the CPU, as before the GPU build) or 'cupyx'
+        self.csr_build = 'auto'
         self.adj_matrix = None
 
     @property
@@ -171,9 +174,10 @@ class Graph:
             raise ValueError(f'urns shape must be ({self.num_nodes}, {self.num_colors}), got {urns.shape}')
         self.node_urns = urns
 
-    def get_mega_urns(self, include_self=True):
-        # custom gather kernel: same values as the SpMM below (float64), without its float64 copies of A and U
-        if (self.csr_indices is not None and self.num_colors <= csr_kernels.MAX_COLORS
+    def get_mega_urns(self, include_self=True, method='auto'):
+        # custom gather kernel: same values as the SpMM below (float64), without its float64 copies of A and U.
+        # method='spmm' always takes the SpMM (cuSPARSE on the GPU), as the code did originally
+        if (method != 'spmm' and self.csr_indices is not None and self.num_colors <= csr_kernels.MAX_COLORS
                 and csr_kernels.urns_supported(self.node_urns)):
             return csr_kernels.mega_urns(self.csr_indptr, self.csr_indices, self.node_urns, include_self)
 
@@ -192,9 +196,20 @@ class Graph:
         if self.num_edges == 0:
             self.adj_matrix = None
         else:
+            if self.csr_build not in ('auto', 'gpu', 'scipy', 'cupyx'):
+                raise ValueError(f"csr_build must be 'auto', 'gpu', 'scipy' or 'cupyx', got {self.csr_build!r}")
+            if self.csr_build == 'scipy':
+                print(f"Building CSR on CPU (scipy)")
+                edges_h = cp.asnumpy(self.edges[: self.num_edges])
+                if release_edges:
+                    self.release_edge_buffer()
+                self._build_csr_scipy(edges_h[:, 0], edges_h[:, 1])
+                del edges_h
+                return
             # large graphs: counting sort on the GPU (csr_kernels.csr_from_edges), same arrays as scipy's build.
             # cupyx's own coo -> csr needs several copies of the edge list in VRAM, which do not fit
-            if self.num_edges > 10**6 and self.use_gpu:
+            gpu_build = self.csr_build == 'gpu' or (self.csr_build == 'auto' and self.num_edges > 10**6)
+            if gpu_build and self.use_gpu:
                 print(f"Building CSR on GPU")
                 # stage the edge list in pinned host memory so the GPU buffer, 8 bytes per entry and the largest
                 # array at the end of growth, can be freed first. The build kernels read it in order over PCIe
@@ -256,6 +271,16 @@ class Graph:
         if source is None:
             source = int(cp.argmax(cp.diff(self.csr_indptr)))
         return csr_kernels.bfs_order(self.csr_indptr, self.csr_indices, self.num_nodes, source)
+
+    def rcm_order(self):
+        """Reverse Cuthill-McKee node order (scipy, on the CPU), for renumber. As fast to step as bfs_order."""
+        from scipy.sparse.csgraph import reverse_cuthill_mckee
+        indptr = cp.asnumpy(self.csr_indptr)
+        indices = self.csr_indices if isinstance(self.csr_indices, np.ndarray) else cp.asnumpy(self.csr_indices)
+        adj = sp_sparse((np.ones(indices.size, dtype=np.int8), indices, indptr), shape=(self.num_nodes, self.num_nodes))
+        order = reverse_cuthill_mckee(adj, symmetric_mode=True)
+        del adj, indices
+        return cp.asarray(order.astype(np.int32))
 
     def _build_csr_scipy(self, rows, cols):
         nnz = np.ones(rows.size, dtype=np.float32)

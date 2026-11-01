@@ -33,6 +33,9 @@ class Barabasi_Albert_Growth:
         self.num_stubs = 0
         self._stubs_head = None
         self._stub_shift = 0
+        # free CuPy's cache of outgrown buffers when VRAM runs low (see grow_batch); False keeps the old
+        # behaviour, where the cache grows until the driver moves live arrays into system RAM
+        self.free_cache = True
 
         if self.graph.num_edges > 0:
             # Unlikely i will want to do BA growth on a pre-existing graph, but just in case
@@ -186,7 +189,7 @@ class Barabasi_Albert_Growth:
         # old edge buffers), and none of them fits a later, larger request. Left alone the cache
         # reaches ~14 GB at 71.6M nodes and the driver moves live arrays out to system RAM to make room
         # Freeing is only done once VRAM runs low: each cudaFree takes ~20 ms under the Windows display driver
-        if CUPY_AVAILABLE:
+        if CUPY_AVAILABLE and self.free_cache:
             pool = cp.get_default_memory_pool()
             cached = pool.total_bytes() - pool.used_bytes()
             if cached > 256 * 2**20 and cp.cuda.runtime.memGetInfo()[0] < cached + 512 * 2**20:

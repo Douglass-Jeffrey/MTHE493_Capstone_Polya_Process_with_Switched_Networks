@@ -18,7 +18,7 @@ import numpy as np
 from capstone_optimized.core import csr_kernels
 from capstone_optimized.scale.engine import Engine
 
-S = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad"
+from capstone_optimized.scale.paths import CACHE, DATA
 ap = argparse.ArgumentParser()
 ap.add_argument("--name", default="n17895744")
 ap.add_argument("--steps", type=int, default=5)
@@ -29,7 +29,7 @@ ap.add_argument("--placements", default="vram,pinned,stream,mixed")
 ap.add_argument("--skip-repo", action="store_true")
 ap.add_argument("--cpu-blocks", type=int, default=3)
 args = ap.parse_args()
-split = os.path.join(S, "data", args.name + "_split")
+split = os.path.join(DATA, args.name + "_split")
 out = {"name": args.name, "steps": args.steps}
 
 
@@ -39,7 +39,7 @@ def md5(a):
 
 # (a) repo reference
 if not args.skip_repo:
-    c = os.path.join(S, "opt", "cache", args.name)
+    c = os.path.join(CACHE, args.name)
     indptr = cp.asarray(np.load(os.path.join(c, "indptr.npy")))
     indices = cp.asarray(np.load(os.path.join(c, "indices.npy")))
     n = indptr.size - 1
@@ -87,10 +87,11 @@ for pl in args.placements.split(","):
 # (c) CPU+GPU: the last blocks drawn on the CPU
 if args.cpu_blocks:
     eng = Engine(split, placement="vram", block_rows=args.block_rows, block_mb=args.block_mb, seed=args.seed)
-    eng.enable_cpu(args.cpu_blocks)
+    nb = max(1, min(args.cpu_blocks, len(eng.blocks) - 1))     # leave the GPU at least one block when it can
+    eng.enable_cpu(nb)
     per, wall = eng.run(args.steps)
     hashes["vram+cpu"] = md5(eng.urns.get())
-    print(f"(c) vram+cpu ({args.cpu_blocks} blocks on the CPU): md5 {hashes['vram+cpu']} step times "
+    print(f"(c) vram+cpu ({nb} of {len(eng.blocks)} blocks on the CPU): md5 {hashes['vram+cpu']} step times "
           f"{['%.3f' % x for x in per]} cpu (apply, draw) {[('%.3f' % a, '%.3f' % b) for a, b in eng.cpu_times]}",
           flush=True)
     eng.close()

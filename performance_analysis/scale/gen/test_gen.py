@@ -20,8 +20,7 @@ import cupy as cp
 
 from capstone_optimized.scale import gen, split_format as sf
 
-SCRATCH = r"C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad"
-DATA = os.path.join(SCRATCH, "data")
+from capstone_optimized.scale.paths import DATA
 
 
 def compare_split(d1, d2, chunk_rows=1 << 23):

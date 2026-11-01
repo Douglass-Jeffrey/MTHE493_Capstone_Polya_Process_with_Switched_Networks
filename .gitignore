@@ -1,3 +1,15 @@
 __pycache__/
 node_urns.csv
 .venv
+
+# Kept on disk but not part of the optimization work (tracked on polya-step-experiments / optimization_extensions)
+results/
+Colab/data_colab/
+benchmarks/
+docs/
+performance_analysis/nsight/
+performance_analysis/raw/
+performance_analysis/*.png
+performance_analysis/A100_raw_results.zip
+src/capstone_optimized/experiments/old/
+src/capstone_optimized/tools/

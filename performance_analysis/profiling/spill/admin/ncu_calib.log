@@ -1,0 +1,11 @@
+﻿==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 37368 (C:\Users\dougl\AppData\Local\Programs\Python\Python312\python.exe)
+==PROF== Profiling "DeviceReduceKernel" - 0: 0%....50%....100% - 1 pass
+==PROF== Profiling "DeviceReduceSingleTileKernel" - 1: 0%....50%....100% - 1 pass
+==PROF== Profiling "cupy_take" - 2: 0%....50%....100% - 1 pass
+==PROF== Profiling "DeviceReduceKernel" - 3: 0%....50%....100% - 1 pass
+==PROF== Profiling "DeviceReduceSingleTileKernel" - 4: 0%....50%....100% - 1 pass
+==PROF== Profiling "cupy_take" - 5: 0%....50%....100% - 1 pass
+done
+==PROF== Disconnected from process 37368
+==PROF== Report: C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\prof\admin\ncu_calib.ncu-rep

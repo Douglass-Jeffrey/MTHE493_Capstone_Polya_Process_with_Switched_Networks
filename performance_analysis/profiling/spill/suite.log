@@ -1,0 +1,22 @@
+﻿## start | 23:06:28 | free RAM 25.4 GB | VRAM used by others 213 MiB | CPU 2%
+python.exe : C:\Users\dougl\AppData\Local\Programs\Python\Python312\python.exe: can't open file 'C:\\Users\\dougl\\AppD
+ata\\Local\\Temp\\claude\\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Process-with-Switched-N
+etworks\\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\\scratchpad\\prof\\gather_bench.py': [Errno 2] No such file or directory
+At C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-MTHE493-Capstone-Polya-Proce
+ss-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\prof\suite.ps1:18 char:1
++ & $py -I "$S\gather_bench.py" "$S\gather.json"
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\dougl\...le or directory:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+## gather done | 23:06:29 | free RAM 25.4 GB | VRAM used by others 213 MiB | CPU 9%
+## n18M done, steps: 0.613, 1.193, 1.182, 1.182, 1.192 | 23:06:55 | free RAM 25.4 GB | VRAM used by others 222 MiB | CPU 5%
+## n36M done, steps: 1.813, 1.472, 1.457, 1.459, 1.476 | 23:07:42 | free RAM 25.4 GB | VRAM used by others 226 MiB | CPU 1%
+## n72M done, steps: 14.147, 12.772, 12.785 | 23:10:08 | free RAM 26.0 GB | VRAM used by others 208 MiB | CPU 9%
+## n36M_fix done, steps: 0.468, 0.350, 0.339, 0.334, 0.356 | 23:10:46 | free RAM 25.7 GB | VRAM used by others 210 MiB | CPU 1%
+## n72M_fix done, steps: 7.582, 2.293, 2.299 | 23:12:21 | free RAM 25.8 GB | VRAM used by others 211 MiB | CPU 0%
+## fixed small sizes done | 23:12:48 | free RAM 25.8 GB | VRAM used by others 200 MiB | CPU 3%
+## cpu18M done, steps: 3.25, 3.29, 3.25, 3.26, 3.24 | 23:13:20 | free RAM 25.8 GB | VRAM used by others 185 MiB | CPU 4%
+## cpu36M done, steps: 6.74, 6.70, 6.77, 6.76, 6.72 | 23:14:25 | free RAM 25.8 GB | VRAM used by others 189 MiB | CPU 13%
+## cpu72M done, steps: 14.67, 14.57, 15.08, 15.22, 14.99 | 23:16:46 | free RAM 25.8 GB | VRAM used by others 184 MiB | CPU 4%
+## SUITE COMPLETE

@@ -1,0 +1,72 @@
+[
+ {
+  "span_mb": 64,
+  "place": "vram",
+  "seq_gbps": 261.2622284592359,
+  "gather_ns": 0.6612998199462891,
+  "gathers_per_s": 1512173404.3133721
+ },
+ {
+  "span_mb": 256,
+  "place": "vram",
+  "seq_gbps": 267.00006861578015,
+  "gather_ns": 0.6771424102783205,
+  "gathers_per_s": 1476794223.5208368
+ },
+ {
+  "span_mb": 512,
+  "place": "vram",
+  "seq_gbps": 268.8484103026387,
+  "gather_ns": 0.6875129699707031,
+  "gathers_per_s": 1454518014.4639492
+ },
+ {
+  "span_mb": 1024,
+  "place": "vram",
+  "seq_gbps": 269.0079061768545,
+  "gather_ns": 0.6813581085205078,
+  "gathers_per_s": 1467657003.7030704
+ },
+ {
+  "span_mb": 2048,
+  "place": "vram",
+  "seq_gbps": 269.71714656833745,
+  "gather_ns": 0.6820025634765625,
+  "gathers_per_s": 1466270148.4616423
+ },
+ {
+  "span_mb": 64,
+  "place": "sysram",
+  "seq_gbps": 13.183665523043489,
+  "gather_ns": 5.2688055419921875,
+  "gathers_per_s": 189796338.47368944
+ },
+ {
+  "span_mb": 256,
+  "place": "sysram",
+  "seq_gbps": 13.20427257461246,
+  "gather_ns": 5.311275634765625,
+  "gathers_per_s": 188278686.4711697
+ },
+ {
+  "span_mb": 512,
+  "place": "sysram",
+  "seq_gbps": 13.208212057746275,
+  "gather_ns": 6.687794799804687,
+  "gathers_per_s": 149526118.83803678
+ },
+ {
+  "span_mb": 1024,
+  "place": "sysram",
+  "seq_gbps": 13.14408603219602,
+  "gather_ns": 13.5888916015625,
+  "gathers_per_s": 73589519.2426891
+ },
+ {
+  "span_mb": 2048,
+  "place": "sysram",
+  "seq_gbps": 13.151101730953597,
+  "gather_ns": 18.761400146484377,
+  "gathers_per_s": 53300925.953939855
+ }
+]

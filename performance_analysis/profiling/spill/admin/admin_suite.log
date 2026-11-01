@@ -1,0 +1,11 @@
+﻿## start | 00:07:26 | free RAM 24.0 GB | VRAM used 243 MiB | CPU 12% | disk free 81.2 GB
+## ncu calibration done | 00:07:42 | free RAM 24.0 GB | VRAM used 243 MiB | CPU 4% | disk free 81.2 GB
+## a36 done in 48s, steps: 1.936, 1.563, 1.548, 1.564, 1.555 | 00:08:40 | free RAM 23.9 GB | VRAM used 232 MiB | CPU 6% | disk free 81 GB
+## a72 done in 177s, steps: 16.050, 13.385, 13.356 | 00:11:54 | free RAM 27.0 GB | VRAM used 240 MiB | CPU 1% | disk free 80.7 GB
+## a36f done in 39s, steps: 0.490, 0.340, 0.347, 0.346, 0.344 | 00:12:40 | free RAM 27.0 GB | VRAM used 241 MiB | CPU 4% | disk free 80.6 GB
+## a72f done in 104s, steps: 8.681, 1.713, 1.712, 1.704 | 00:14:35 | free RAM 27.3 GB | VRAM used 239 MiB | CPU 2% | disk free 80.4 GB
+## c36 done, report: True | 00:15:10 | free RAM 27.3 GB | VRAM used 235 MiB | CPU 4% | disk free 80.4 GB
+## c72 done, report: True | 00:17:05 | free RAM 27.3 GB | VRAM used 221 MiB | CPU 4% | disk free 80.4 GB
+## c36f done, report: True | 00:17:39 | free RAM 27.3 GB | VRAM used 221 MiB | CPU 1% | disk free 80.4 GB
+## c72f done, report: True | 00:19:04 | free RAM 27.5 GB | VRAM used 209 MiB | CPU 1% | disk free 80.4 GB
+## ADMIN SUITE COMPLETE

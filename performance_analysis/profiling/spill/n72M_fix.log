@@ -1,0 +1,74 @@
+﻿profiled in 92s
+managed (cudaMallocManaged) allocations: 0
+== BA growth: wall 28.771s  kernels 23.590s (41234)  gpu-idle 5.181s  new cudaMalloc 20.70 GB  footprint 20.78 GB
+   memcpy kind 8: 21.68 GB in 1.339s
+   memcpy kind 2: 0.00 GB in 0.003s
+     20.3820s  x8704 cupy_copy__int32_int32
+      1.7777s  x1334 cupy_take
+      0.6403s  x4591 DeviceMergeSortMergeKernel
+      0.3906s  x1018 DeviceMergeSortBlockSortKernel
+      0.2215s  x1018 cupy_cub_any
+      0.0488s  x4591 DeviceMergeSortPartitionKernel
+      0.0148s  x1018 cupy_add__int64_int_int64
+      0.0122s  x1018 transform_kernel
+== CSR build: wall 36.280s  kernels 0.660s (3)  gpu-idle 35.620s  new cudaMalloc 0.00 GB  footprint 20.78 GB
+   memcpy kind 1: 3.72 GB in 2.141s
+   memcpy kind 2: 5.15 GB in 1.067s
+      0.5300s  x2    cupy_copy__int32_int32
+      0.1304s  x1    cupy_fill
+== Polya step 0: wall 7.585s  kernels 7.264s (1124)  gpu-idle 0.321s  new cudaMalloc 2.30 GB  footprint 9.37 GB
+   memcpy kind 2: 0.00 GB in 0.000s
+      5.8273s  x1    csrmm_alg1_kernel
+      0.4011s  x6    cupy_prepare_array_indexing
+      0.2823s  x1093 transpose_readWrite_alignment_kernel
+      0.2062s  x1    cupyx_scipy_sparse_has_canonical_format
+      0.0869s  x1    cupy_greater__float64_float32_bool
+      0.0834s  x2    cupy_take
+      0.0616s  x1    cupy_scatter_update
+      0.0503s  x1    cupy_random_x_mod_1
+== Polya step 1: wall 2.297s  kernels 2.138s (1121)  gpu-idle 0.159s  new cudaMalloc 0.00 GB  footprint 9.37 GB
+   memcpy kind 2: 0.00 GB in 0.000s
+      1.1314s  x1    csrmm_alg1_kernel
+      0.4607s  x6    cupy_prepare_array_indexing
+      0.0877s  x2    cupy_take
+      0.0553s  x1093 transpose_readWrite_alignment_kernel
+      0.0512s  x1    cupy_true_divide__float32_float32_float32
+      0.0434s  x1    cupy_scatter_update
+      0.0433s  x1    cupy_arange__int_int_int64
+      0.0410s  x1    cupy_greater__float64_float32_bool
+== Polya step 2: wall 2.298s  kernels 2.139s (1121)  gpu-idle 0.159s  new cudaMalloc 0.00 GB  footprint 9.37 GB
+   memcpy kind 2: 0.00 GB in 0.000s
+      1.1305s  x1    csrmm_alg1_kernel
+      0.4619s  x6    cupy_prepare_array_indexing
+      0.0875s  x2    cupy_take
+      0.0556s  x1093 transpose_readWrite_alignment_kernel
+      0.0512s  x1    cupy_true_divide__float32_float32_float32
+      0.0434s  x1    cupy_scatter_update
+      0.0433s  x1    cupy_arange__int_int_int64
+      0.0412s  x1    cupy_copy__int32_float32
+peak device footprint: 20.78 GB
+nodes=71,582,784 edges=429,500,352 growth=28.8s csr=36.3s
+start         free= 5,100 MB  pool used=     0 MB  held=     0 MB
+after_growth  free=     0 MB  pool used= 6,225 MB  held=19,820 MB
+after_csr     free=     0 MB  pool used= 9,775 MB  held=19,820 MB
+after_free    free=     0 MB  pool used= 4,160 MB  held= 6,744 MB
+after_polya   free=     0 MB  pool used= 4,706 MB  held= 8,929 MB
+steps: 7.582, 2.293, 2.299
+probe before_polya
+  vram_reference        64 MB   253.2 / 253.1 / 253.0
+  csr.data           1,638 MB    13.6 /  13.7 /  13.7
+  csr.indices        1,638 MB    13.1 /  13.2 /  13.2
+  csr.indptr           273 MB   256.8 / 258.4 / 257.7
+  node_urns            546 MB   258.5 / 258.6 / 255.8
+  deltas               546 MB    13.2 /  12.5 /  13.2
+probe after_polya
+  vram_reference        64 MB   251.4 / 251.0 / 251.2
+  csr.data           1,638 MB   257.6 / 257.9 / 257.9
+  csr.indices        1,638 MB    27.0 /  26.9 /  27.4
+  csr.indptr           273 MB   253.5 / 256.8 / 257.4
+  node_urns            546 MB   256.8 / 257.2 / 258.0
+  deltas               546 MB   257.1 / 257.4 / 256.7
+probe spmm_operands
+  B_dense              546 MB   256.8 / 257.8 / 256.7
+  C_out                546 MB    21.7 /  21.7 /  21.1
+  spmm_s          1.186s, 1.447s

@@ -1,0 +1,9 @@
+using CuPy (devices=1)
+engine: n=999,921,184 blocks=239 placement=mixed (pinned 139, ram 53, stream 47) pinned=13.54 GiB ram=4.97 GiB escapes=179435 push K=0 load 29.9 s
+engine: 999,921,184 nodes, blocks {'vram': 0, 'pinned': 139, 'ram': 53, 'stream': 47}, RAM available after load 8.3 GiB
+
+engine backend, preset all, 999,921,184 nodes, 12 steps
+  load          29.92 s
+  steps         50.16 s
+  step         4.1519 s median (4.1489 - 4.4884)
+  total         82.22 s    urns md5 da8ee400c9f2779e5bd5c1b258b1b1c9

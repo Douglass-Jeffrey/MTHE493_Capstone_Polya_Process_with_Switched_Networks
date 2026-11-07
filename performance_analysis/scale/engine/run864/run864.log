@@ -1,0 +1,49 @@
+start 12:12:41
+using CuPy (devices=1)
+engine: n=999,921,184 blocks=239 placement=mixed (pinned 139, ram 53, stream 47) pinned=13.54 GiB ram=4.97 GiB escapes=179435 push K=0 load 24.8 s
+engine: 999,921,184 nodes, blocks {'vram': 0, 'pinned': 139, 'ram': 53, 'stream': 47}, RAM available after load 3.5 GiB
+  step 24: 4.006 s, median 4.008 s over the last 24, 102 s elapsed
+  step 48: 4.020 s, median 4.024 s over the last 24, 206 s elapsed
+  step 72: 4.086 s, median 4.012 s over the last 24, 309 s elapsed
+  step 96: 4.339 s, median 4.221 s over the last 24, 416 s elapsed
+  step 120: 3.977 s, median 4.217 s over the last 24, 522 s elapsed
+  step 144: 4.256 s, median 3.974 s over the last 24, 624 s elapsed
+  step 168: 3.993 s, median 4.236 s over the last 24, 743 s elapsed
+  step 192: 3.996 s, median 3.997 s over the last 24, 845 s elapsed
+  step 216: 4.221 s, median 4.011 s over the last 24, 949 s elapsed
+  step 240: 4.132 s, median 4.228 s over the last 24, 1057 s elapsed
+  step 264: 4.257 s, median 4.256 s over the last 24, 1165 s elapsed
+  step 288: 4.216 s, median 4.254 s over the last 24, 1273 s elapsed
+  step 312: 4.242 s, median 4.230 s over the last 24, 1380 s elapsed
+  step 336: 4.225 s, median 4.237 s over the last 24, 1488 s elapsed
+  step 360: 4.216 s, median 4.231 s over the last 24, 1596 s elapsed
+  step 384: 4.218 s, median 4.223 s over the last 24, 1703 s elapsed
+  step 408: 4.213 s, median 4.219 s over the last 24, 1811 s elapsed
+  step 432: 4.232 s, median 4.222 s over the last 24, 1918 s elapsed
+  step 456: 4.231 s, median 4.236 s over the last 24, 2026 s elapsed
+  step 480: 4.287 s, median 4.227 s over the last 24, 2134 s elapsed
+  step 504: 4.244 s, median 4.226 s over the last 24, 2241 s elapsed
+  step 528: 4.234 s, median 4.235 s over the last 24, 2349 s elapsed
+  step 552: 4.234 s, median 4.236 s over the last 24, 2457 s elapsed
+  step 576: 4.339 s, median 3.997 s over the last 24, 2561 s elapsed
+  step 600: 4.268 s, median 4.221 s over the last 24, 2669 s elapsed
+  step 624: 4.212 s, median 4.225 s over the last 24, 2776 s elapsed
+  step 648: 4.218 s, median 4.222 s over the last 24, 2884 s elapsed
+  step 672: 4.446 s, median 4.236 s over the last 24, 2992 s elapsed
+  step 696: 4.216 s, median 4.238 s over the last 24, 3100 s elapsed
+  step 720: 4.219 s, median 4.217 s over the last 24, 3206 s elapsed
+  step 744: 4.219 s, median 4.221 s over the last 24, 3314 s elapsed
+  step 768: 4.392 s, median 4.220 s over the last 24, 3421 s elapsed
+  step 792: 4.529 s, median 4.646 s over the last 24, 3537 s elapsed
+  step 816: 4.550 s, median 4.688 s over the last 24, 3656 s elapsed
+  step 840: 4.261 s, median 4.242 s over the last 24, 3766 s elapsed
+  step 864: 4.214 s, median 4.227 s over the last 24, 3873 s elapsed
+
+engine backend, preset all, 999,921,184 nodes, 864 steps
+  load          24.82 s
+  steps       3672.47 s
+  step         4.2214 s median (3.9713 - 8.7755)
+  total       3900.68 s    urns md5 4896f1007c00d4a37082811d06508c3d
+histograms saved to work/reports/1b/hist864.csv
+exit 0
+end 13:17:59

@@ -1,0 +1,22 @@
+start 02:38:29
+using CuPy (devices=1)
+engine: n=999,921,184 blocks=239 placement=mixed (pinned 139, ram 53, stream 47) pinned=13.54 GiB ram=4.97 GiB escapes=179435 push K=0 load 29.7 s
+engine: 999,921,184 nodes, blocks {'vram': 0, 'pinned': 139, 'ram': 53, 'stream': 47}, RAM available after load 8.4 GiB
+  step 96: 4.177 s, median 4.162 s over the last 96, 441 s elapsed
+  step 192: 4.175 s, median 4.175 s over the last 96, 883 s elapsed
+  step 288: 4.177 s, median 4.175 s over the last 96, 1324 s elapsed
+  step 384: 4.177 s, median 4.177 s over the last 96, 1766 s elapsed
+  step 480: 4.180 s, median 4.176 s over the last 96, 2208 s elapsed
+  step 576: 4.174 s, median 4.176 s over the last 96, 2649 s elapsed
+  step 672: 4.177 s, median 4.177 s over the last 96, 3091 s elapsed
+  step 768: 4.173 s, median 4.176 s over the last 96, 3532 s elapsed
+  step 864: 4.175 s, median 4.178 s over the last 96, 3974 s elapsed
+
+engine backend, preset all, 999,921,184 nodes, 864 steps
+  load          29.81 s
+  steps       3607.41 s
+  step         4.1760 s median (4.1080 - 4.4865)
+  total       4006.94 s    urns md5 a0d9f3f13c46e4620bd11c108fc8ca64
+histograms saved to C:/Users/dougl/OneDrive/Documents/dev_projects/polya/polya_optimization/work/reports/1b/hist864b.csv
+exit 0
+end 03:45:35

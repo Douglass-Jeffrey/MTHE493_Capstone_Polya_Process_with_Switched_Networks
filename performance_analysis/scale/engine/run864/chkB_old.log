@@ -1,0 +1,15 @@
+OLD ENGINE from C:\Users\dougl\AppData\Local\Temp\claude\c--Users-dougl-OneDrive-Documents-dev-projects-polya-MTHE493-Capstone-Polya-Process-with-Switched-Networks\7bf0ea5c-bb18-4a6c-8e60-f701292fffbe\scratchpad\old_engine\engine.py
+using CuPy (devices=1)
+engine: n=999,921,184 blocks=239 placement=mixed (pinned 139, ram 53, stream 47) pinned=13.54 GiB ram=4.97 GiB escapes=179435 push K=0 load 29.8 s
+engine: 999,921,184 nodes, blocks {'vram': 0, 'pinned': 139, 'ram': 53, 'stream': 47}, RAM available after load 8.5 GiB
+  step 24: 4.212 s, median 4.212 s over the last 24, 112 s elapsed
+  step 48: 4.220 s, median 4.218 s over the last 24, 223 s elapsed
+  step 72: 4.333 s, median 4.220 s over the last 24, 335 s elapsed
+  step 96: 4.459 s, median 4.203 s over the last 24, 449 s elapsed
+
+engine backend, preset all, 999,921,184 nodes, 104 steps
+  load          29.90 s
+  steps        444.89 s
+  step         4.2184 s median (4.1800 - 5.3514)
+  total        521.58 s    urns md5 a81824ec7c3452d34b8102901cfeeae9
+histograms saved to C:/Users/dougl/OneDrive/Documents/dev_projects/polya/polya_optimization/work/reports/1b/chkB_old.csv

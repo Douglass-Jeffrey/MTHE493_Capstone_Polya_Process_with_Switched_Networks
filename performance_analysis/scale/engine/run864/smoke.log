@@ -1,0 +1,42 @@
+start 12:08:07
+using CuPy (devices=1)
+writing the graph to C:\Users\dougl\OneDrive\Documents\dev_projects\polya\polya_optimization\work\data\ba_m3_i64_b1788_s493 (about 30 GB and 2 minutes at 10^9 nodes)
+[gen] n=999,921,184 batches=8940 n_out=2,999,763,360 (11.17 GB)
+[gen] VRAM cache 3.00 GB (27% of the out part)
+[gen]   batch 1/8940  nodes 72  0.1 s
+[gen]   batch 513/8940  nodes 4,168  0.5 s
+[gen]   batch 1025/8940  nodes 8,264  0.8 s
+[gen]   batch 1537/8940  nodes 12,360  1.2 s
+[gen]   batch 2049/8940  nodes 47,776  1.6 s
+[gen]   batch 2561/8940  nodes 113,312  1.9 s
+[gen]   batch 3073/8940  nodes 178,848  2.3 s
+[gen]   batch 3585/8940  nodes 261,664  2.6 s
+[gen]   batch 4097/8940  nodes 1,310,240  3.1 s
+[gen]   batch 4609/8940  nodes 2,358,816  3.7 s
+[gen]   batch 5121/8940  nodes 3,407,392  4.1 s
+[gen]   batch 5633/8940  nodes 12,719,648  4.7 s
+[gen]   batch 6145/8940  nodes 29,496,864  5.3 s
+[gen]   batch 6657/8940  nodes 46,274,080  6.1 s
+[gen]   batch 7169/8940  nodes 71,407,136  7.0 s
+[gen]   batch 7681/8940  nodes 339,842,592  8.6 s
+[gen]   batch 8193/8940  nodes 608,278,048  13.4 s
+[gen]   batch 8705/8940  nodes 876,713,504  20.6 s
+[gen]   batch 8940/8940  nodes 999,921,184  24.2 s
+[gen] growth 24.2 s, resample rounds 872, rows left with duplicates 0
+[gen] in-degrees + in_ptr 19.2 s, nnz_in 2,999,767,392
+[gen] in part filled in 19 passes, 24.5 s
+[gen] done 70.5 s  {'peak_rss_gb': 12.68, 'min_avail_ram_gb': 7.53, 'min_vram_free_gb': 1.03, 'vram_by_phase_gb (min free, max pool)': {'growth': (1.95, 3.06), 'in_count': (1.03, 3.98), 'in_fill': (1.29, 3.71)}}  disk 29.80 GB
+engine: n=999,921,184 blocks=239 placement=mixed (pinned 139, ram 37, stream 63) pinned=13.54 GiB ram=3.47 GiB escapes=179435 push K=0 load 28.4 s
+engine: 999,921,184 nodes, blocks {'vram': 0, 'pinned': 139, 'ram': 37, 'stream': 63}, RAM available after load 4.7 GiB
+  step 1: 4.276 s, median 4.276 s over the last 1, 6 s elapsed
+  step 2: 4.043 s, median 4.043 s over the last 1, 13 s elapsed
+  step 3: 4.027 s, median 4.027 s over the last 1, 19 s elapsed
+
+engine backend, preset all, 999,921,184 nodes, 3 steps
+  generate      70.51 s
+  load          28.50 s
+  steps         12.35 s
+  step         4.0426 s median (4.0269 - 4.2761)
+  total        120.13 s    urns md5 9ab5287a20969778d1687cb270e05fd2
+histograms saved to work/reports/1b/smoke_hist.csv
+end 12:10:25

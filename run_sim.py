@@ -112,6 +112,9 @@ def parse_args():
     out = ap.add_argument_group("output")
     out.add_argument("--save-urns", metavar="PATH", help="final urns as .npy, in the original node order")
     out.add_argument("--hist", metavar="PATH", help="per-step histogram (50 bins) of the red fraction, as CSV")
+    out.add_argument("--progress", type=int, default=0, metavar="N", help="print the step time every N steps")
+    out.add_argument("--profile-steps", metavar="A-B", type=lambda s: tuple(int(x) for x in s.split("-")),
+                     help="cudaProfilerStart/Stop around steps A to B (for nsys --capture-range=cudaProfilerApi)")
     out.add_argument("--save-csr", metavar="NAME", help="write the CSR (growth order) to work/cache/NAME/")
     out.add_argument("--log", default=os.path.join(ROOT, "runs.jsonl"), help="append the summary here ('' = off)")
 
@@ -194,22 +197,106 @@ def to_original_order(g, urns):
     return out
 
 
-def red_hist(urns):
-    red = urns[..., 0].astype(cp.float64).ravel()
-    total = urns.sum(axis=-1).astype(cp.float64).ravel()
-    return cp.asnumpy(cp.histogram(red / cp.maximum(total, 1), bins=50, range=(0.0, 1.0))[0])
+_HIST_SRC = r"""
+// cupy.histogram(red / max(red + black, 1), bins=50, range=(0, 1)) for (n, 2) urns in one pass: the same float64
+// fraction and the same binary search over the same edges as cupy's kernel, counted per block in shared memory
+// (cupy's one global atomicAdd per node queues up when most nodes share a bin)
+template<typename T>
+__global__ void red_hist(const T* __restrict__ urns, long long n, const double* __restrict__ bins,
+                         unsigned long long* __restrict__ y)
+{
+    __shared__ unsigned int h[50];
+    for (int i = threadIdx.x; i < 50; i += blockDim.x) h[i] = 0;
+    __syncthreads();
+    for (long long r = (long long)blockIdx.x * blockDim.x + threadIdx.x; r < n; r += (long long)gridDim.x * blockDim.x) {
+        double red = (double)urns[2 * r];
+        double tot = red + (double)urns[2 * r + 1];
+        double x = red / (tot > 1.0 ? tot : 1.0);
+        if (x < bins[0] || bins[50] < x) continue;
+        int high = 50, low = 0;
+        while (high - low > 1) {
+            int mid = (high + low) / 2;
+            if (bins[mid] <= x) low = mid; else high = mid;
+        }
+        atomicAdd(&h[low], 1u);
+    }
+    __syncthreads();
+    for (int i = threadIdx.x; i < 50; i += blockDim.x)
+        if (h[i]) atomicAdd(&y[i], (unsigned long long)h[i]);
+}
+"""
+_hist_mod = None
 
 
-def timed_steps(step, steps, after=None):
+def _red_hist_fast(urns):
+    global _hist_mod
+    if _hist_mod is None:
+        _hist_mod = cp.RawModule(code=_HIST_SRC, options=("-std=c++14",),
+                                 name_expressions=["red_hist<unsigned short>", "red_hist<int>"])
+    name = "red_hist<unsigned short>" if urns.dtype == cp.uint16 else "red_hist<int>"
+    edges = cp.histogram(cp.zeros(1), bins=50, range=(0.0, 1.0))[1]       # cupy's own bin edges
+    y = cp.zeros(50, cp.uint64)
+    _hist_mod.get_function(name)((24 * 8,), (256,), (urns, np.int64(urns.shape[0]), edges, y))
+    return cp.asnumpy(y).astype(np.int64)
+
+
+def red_hist(urns, rows=1 << 23):
+    """50-bin histogram of the red fraction, in chunks of rows (the whole array in float64 is 8 GB at 10^9 nodes)."""
+    if (isinstance(urns, cp.ndarray) and urns.ndim == 2 and urns.shape[1] == 2 and urns.flags.c_contiguous
+            and urns.dtype in (cp.uint16, cp.int32) and urns.shape[0] < 2**32):
+        return _red_hist_fast(urns)
+    h = np.zeros(50, np.int64)
+    for i in range(0, urns.shape[0], rows):
+        u = urns[i:i + rows]
+        red = u[..., 0].astype(cp.float64).ravel()
+        total = u.sum(axis=-1).astype(cp.float64).ravel()
+        h += cp.asnumpy(cp.histogram(red / cp.maximum(total, 1), bins=50, range=(0.0, 1.0))[0])
+    return h
+
+
+def hist_recorder(args, urns_of):
+    """The histogram after each step, also written to args.hist as it is made, so a long run keeps what it has."""
+    hist = []
+    if not args.hist:
+        return hist, None
+    open(args.hist, "w").close()
+
+    def after():
+        hist.append(red_hist(urns_of()))
+        with open(args.hist, "a") as f:
+            f.write(",".join(str(int(c)) for c in hist[-1]) + "\n")
+    return hist, after
+
+
+def urns_md5(urns, rows=1 << 24):
+    """md5 of the urns as int32 (whatever their dtype), in chunks of rows, the same as hashing the whole array."""
+    h = hashlib.md5()
+    for i in range(0, urns.shape[0], rows):
+        h.update(cp.asnumpy(urns[i:i + rows].astype(cp.int32)).tobytes())
+    return h.hexdigest()
+
+
+def timed_steps(step, steps, after=None, progress=0, profile=None):
+    """profile = (a, b): cudaProfilerStart before step a and Stop after step b (1-based), for
+    nsys profile --capture-range=cudaProfilerApi, so a trace can cover a few steps late in a long run."""
     times = []
-    for _ in range(steps):
+    t_start = time.perf_counter()
+    for i in range(1, steps + 1):
         cp.cuda.Device().synchronize()
+        if profile and i == profile[0]:
+            cp.cuda.profiler.start()
         t0 = time.perf_counter()
         step()
         cp.cuda.Device().synchronize()
         times.append(time.perf_counter() - t0)
         if after is not None:
             after()
+        if profile and i == profile[1]:
+            cp.cuda.Device().synchronize()
+            cp.cuda.profiler.stop()
+        if progress and len(times) % progress == 0:
+            print(f"  step {len(times)}: {times[-1]:.3f} s, median {np.median(times[-progress:]):.3f} s over the last "
+                  f"{progress}, {time.perf_counter() - t_start:.0f} s elapsed", flush=True)
     return times
 
 
@@ -221,8 +308,8 @@ def run_core(args, timer):
         kw.update(memory_enabled=True, memory_decay_time=args.memory,
                   mem_decay=cp.full((n, 2), args.decay, dtype=cp.int32))
     polya = Polya_Process(g, **kw)
-    hist = []
-    times = timed_steps(polya.step, args.steps, (lambda: hist.append(red_hist(g.node_urns))) if args.hist else None)
+    hist, after = hist_recorder(args, lambda: g.node_urns)
+    times = timed_steps(polya.step, args.steps, after, args.progress, args.profile_steps)
     info = {"n": n, "entries": int(g.csr_indptr[-1]), "csr_indices_on": "host" if isinstance(g.csr_indices, np.ndarray) else "device",
             "memory_as": "bits" if getattr(polya, "_mem_bits", None) is not None else ("int32" if args.memory else None)}
     return times, to_original_order(g, g.node_urns), hist, info
@@ -237,8 +324,8 @@ def run_replicas(args, timer):
     cp.get_default_memory_pool().free_all_blocks()
     rp = ReplicaPolya(g.csr_indptr, g.csr_indices, args.runs, deltas=[args.delta] * args.runs,
                       decays=[args.decay] * args.runs, memory=args.memory, seed=args.seed)
-    hist = []
-    times = timed_steps(rp.step, args.steps, (lambda: hist.append(red_hist(rp.urns(0)))) if args.hist else None)
+    hist, after = hist_recorder(args, lambda: rp.urns(0))
+    times = timed_steps(rp.step, args.steps, after, args.progress, args.profile_steps)
     info = {"n": g.num_nodes, "entries": int(g.csr_indptr[-1]), "runs": args.runs,
             "per_run_step_s": float(np.median(times)) / args.runs, "hist_of": "run 0"}
     return times, to_original_order(g, rp.urns()), hist, info
@@ -271,14 +358,19 @@ def run_engine(args, timer):
             eng.enable_cpu(args.cpu_blocks)
         if args.memory:
             eng.enable_memory(args.memory, decay=args.decay, ring_path=args.ring_file)
-    hist = []
-    times = timed_steps(eng.step, args.steps, (lambda: hist.append(red_hist(eng.urns))) if args.hist else None)
-    info = {"n": eng.n, "graph_dir": d, "placement": eng.placement,
-            "blocks": {w: sum(b["where"] == w for b in eng.blocks) for w in ("vram", "pinned", "ram", "stream")},
-            "overflow": bool(eng.overflowed())}
-    urns = eng.urns.astype(cp.int32)
+    print(f"engine: {eng.n:,} nodes, blocks {_block_counts(eng)}, RAM available after load "
+          f"{psutil.virtual_memory().available / 2**30:.1f} GiB", flush=True)
+    hist, after = hist_recorder(args, lambda: eng.urns)
+    times = timed_steps(eng.step, args.steps, after, args.progress, args.profile_steps)
+    info = {"n": eng.n, "graph_dir": d, "placement": eng.placement, "blocks": _block_counts(eng),
+            "pinned_gb": args.pinned_gb, "ram_gb": args.ram_gb, "overflow": bool(eng.overflowed())}
+    urns = eng.urns                                            # 16-bit; an int32 copy would be 8 GB at 10^9 nodes
     eng.close()
     return times, urns, hist, info
+
+
+def _block_counts(eng):
+    return {w: sum(b["where"] == w for b in eng.blocks) for w in ("vram", "pinned", "ram", "stream")}
 
 
 def main():
@@ -291,14 +383,14 @@ def main():
     timer.t["steps"] = float(np.sum(times))
     total = time.perf_counter() - t_all
 
-    urns_h = cp.asnumpy(urns)
     summary = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "backend": args.backend, "preset": args.preset,
                "batches": args.batches, "seed": args.seed, "steps": args.steps, "memory": args.memory,
                "delta": args.delta, "decay": args.decay,
                **({k: getattr(args, k) for k in SWITCHES} if args.backend != "engine" else {}),
                **info, "phases_s": {k: round(v, 3) for k, v in timer.t.items()},
                "step_median_s": round(float(np.median(times)), 4) if times else None,
-               "total_s": round(total, 2), "urns_md5": hashlib.md5(urns_h.tobytes()).hexdigest()}
+               "total_s": round(total, 2), "urns_md5": urns_md5(urns),
+               "step_s": [round(t, 4) for t in times]}
 
     print(f"\n{args.backend} backend, preset {args.preset}, {summary['n']:,} nodes, {args.steps} steps")
     if args.backend != "engine":
@@ -310,10 +402,9 @@ def main():
     print(f"  total     {total:9.2f} s    urns md5 {summary['urns_md5']}")
 
     if args.save_urns:
-        np.save(args.save_urns, urns_h)
+        np.save(args.save_urns, cp.asnumpy(urns).astype(np.int32, copy=False))
         print(f"urns saved to {args.save_urns}")
     if args.hist:
-        np.savetxt(args.hist, np.array(hist, dtype=np.int64), delimiter=",", fmt="%d")
         print(f"histograms saved to {args.hist}")
     if args.log:
         with open(args.log, "a") as f:

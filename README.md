@@ -11,12 +11,19 @@ plots and the website's profiling reports are on the other branches; here they a
     python run_sim.py --batches 128 --preset original    # the code as it was before the optimizations
     python run_sim.py --help                             # every switch, backend and preset
 
+    # 10^9 nodes (needs ~40 GB free on the drive and ~20 GB of free RAM; size --ram-gb to what is free):
+    python run_sim.py --backend engine --batches 1788 --placement mixed --block-mb 96 --block-rows 8388608 \
+        --pinned-gb 13 --ram-gb 5 --memory 72 --ring-file work/data/ring_1b_m72.bin --steps 864 \
+        --hist work/reports/1b/hist864.csv --progress 24
+
 `run_sim.py` grows the benchmark's Barabasi-Albert graph (n = 64 + 559,240 x batches), runs the steps, prints
 the time of each phase and appends a summary, with an md5 of the final urns, to `work/runs.jsonl`. Each
 optimization can be switched on or off (`--kernel`, `--memory-format`, `--csr-build`, `--csr-placement`,
 `--renumber`, `--reserve`, `--free-cache`, `--keep-edges`), and there are three backends: `core` (the
 simulator itself), `replicas` (several runs side by side on one graph) and `engine` (graphs larger than VRAM).
 Switches that should not change the result do not: the presets give identical urns for the same seed.
+`--hist` writes the red-fraction histogram after every step as it goes, and `--progress N` prints the step time
+every N steps, for long runs.
 
 ## Layout
 

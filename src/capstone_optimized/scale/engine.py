@@ -529,8 +529,19 @@ class Engine:
         else:
             self.ring = np.zeros((self.mem_M, nbytes), np.uint8)
         self.old_bits = cp.zeros(nbytes, cp.uint8)
-        self.ring_io = Pinned(nbytes)
-        self.ring_buf = self.ring_io.array(np.uint8, nbytes)
+        # two pinned rows: the draws read back from the ring and the draws written to it. Both file operations run
+        # on threads (numpy copies release the GIL), so the host keeps launching blocks while they are under way.
+        self.ring_io = Pinned(2 * nbytes)
+        rows = self.ring_io.array(np.uint8, 2 * nbytes)
+        self.ring_in, self.ring_out = rows[:nbytes], rows[nbytes:]
+        self.ring_read = self.ring_write = None
+        self.ring_write_slot = -1
+
+    def _ring_get(self, slot):
+        self.ring_in[:] = self.ring[slot]
+
+    def _ring_put(self, slot):
+        self.ring[slot] = self.ring_out
 
     def enable_cpu(self, nblocks, threads=8):
         """
@@ -583,6 +594,13 @@ class Engine:
 
     def step(self, rand=None):
         nvtx.RangePush(f"step {self.step_no}")
+        slot = self.step_no % self.mem_M if self.mem_M else 0
+        readback = self.mem_M and self.step_no > self.mem_M
+        if readback:                                    # the draws from M steps ago, read while the GPU draws
+            if self.ring_write is not None and self.ring_write_slot == slot:
+                self.ring_write.join()                  # (M = 1: last step's row must be written first)
+            self.ring_read = threading.Thread(target=self._ring_get, args=(slot,))
+            self.ring_read.start()
         th = None
         if getattr(self, "cpu", None) is not None:
             assert rand is None, "the CPU share uses Philox"
@@ -619,13 +637,15 @@ class Engine:
                 self.k_early_philox(((nbytes + 255) // 256,), (256,), args + (np.uint64(0), self.bits))
             else:
                 self.k_early_ext(((nbytes + 255) // 256,), (256,), args + (rand, self.bits))
+        # On Windows (WDDM) launched work is batched and only reaches the GPU at the next CUDA call; a stream query
+        # submits the last blocks now, before the host blocks on anything else
+        cp.cuda.get_current_stream().done
         if th is not None:
             th.join()
             self.bits[self.cpu_b0:].set(self.h_bits[self.cpu_b0:])
-        slot = self.step_no % self.mem_M if self.mem_M else 0
-        if self.mem_M and self.step_no > self.mem_M:
-            self.ring_buf[:] = self.ring[slot]
-            self.old_bits.set(self.ring_buf)
+        if readback:
+            self.ring_read.join()
+            self.old_bits.set(self.ring_in)
             self.k_apply_mem(((self.n + 255) // 256,), (256,), (self.urns, self.bits, self.old_bits, np.int64(self.n),
                                                                  np.int32(self.delta), np.int32(self.mem_decay),
                                                                  self.flag))
@@ -633,8 +653,11 @@ class Engine:
             self.k_apply(((self.n + 255) // 256,), (256,), (self.urns, self.bits, np.int64(self.n),
                                                              np.int32(self.delta), self.flag))
         if self.mem_M:
-            self.bits.get(out=self.ring_buf)
-            self.ring[slot] = self.ring_buf
+            if self.ring_write is not None:
+                self.ring_write.join()                  # ring_out is free again
+            self.bits.get(out=self.ring_out)
+            self.ring_write, self.ring_write_slot = threading.Thread(target=self._ring_put, args=(slot,)), slot
+            self.ring_write.start()                     # written while the next step draws
         if th is not None:
             self.bits.get(out=self.h_bits)
             self.cpu_pending = True
@@ -672,5 +695,7 @@ class Engine:
         self.dev.clear()
         self._ram.clear()
         if self.mem_M:
+            if self.ring_write is not None:
+                self.ring_write.join()
             self.ring_io.free()
             self.ring = None
